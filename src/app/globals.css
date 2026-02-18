@@ -1,0 +1,51 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --ohaeng-wood: #22C55E;
+    --ohaeng-fire: #EF4444;
+    --ohaeng-earth: #EAB308;
+    --ohaeng-metal: #F8FAFC;
+    --ohaeng-water: #3B82F6;
+  }
+
+  body {
+    @apply bg-background text-text-primary;
+  }
+}
+
+@layer components {
+  .ohaeng-wood {
+    @apply text-ohaeng-wood;
+  }
+  .ohaeng-fire {
+    @apply text-ohaeng-fire;
+  }
+  .ohaeng-earth {
+    @apply text-ohaeng-earth;
+  }
+  .ohaeng-metal {
+    @apply text-ohaeng-metal;
+  }
+  .ohaeng-water {
+    @apply text-ohaeng-water;
+  }
+
+  .ohaeng-bg-wood {
+    @apply bg-ohaeng-wood/20;
+  }
+  .ohaeng-bg-fire {
+    @apply bg-ohaeng-fire/20;
+  }
+  .ohaeng-bg-earth {
+    @apply bg-ohaeng-earth/20;
+  }
+  .ohaeng-bg-metal {
+    @apply bg-ohaeng-metal/20;
+  }
+  .ohaeng-bg-water {
+    @apply bg-ohaeng-water/20;
+  }
+}
