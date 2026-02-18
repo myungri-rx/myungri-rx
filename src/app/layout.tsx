@@ -2,8 +2,8 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "명리처방전 — AI 사주 분석",
-  description: "AI 기반 사주 명리 분석 및 궁합 서비스",
+  title: "사주전쟁49 — 사주명리 분석",
+  description: "30년 전문가가 읽는 당신의 사주 — 운명을 놓고 펼치는 기의 전쟁",
 };
 
 export default function RootLayout({
@@ -13,6 +13,12 @@ export default function RootLayout({
 }) {
   return (
     <html lang="ko">
+      <head>
+        <link
+          href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@700;900&display=swap"
+          rel="stylesheet"
+        />
+      </head>
       <body className="min-h-screen antialiased">{children}</body>
     </html>
   );

@@ -34,18 +34,34 @@ export function AnalysisForm({ onSubmit, isLoading }: AnalysisFormProps) {
   };
 
   return (
-    <Card>
-      <form onSubmit={handleSubmit} className="space-y-6">
+    <Card variant="elevated">
+      <h2 className="font-display text-xl font-bold text-gradient-gold mb-6">
+        운명 해독을 위한 정보
+      </h2>
+      <form onSubmit={handleSubmit} className="space-y-8">
         <BirthInputForm value={input} onChange={setInput} />
         <ConcernInput value={concern} onChange={setConcern} />
-        <Button type="submit" className="w-full" size="lg" disabled={!isValid || isLoading}>
+        <div
+          className="h-px"
+          style={{
+            background:
+              "linear-gradient(90deg, transparent, rgba(212,175,55,0.3), transparent)",
+          }}
+        />
+        <Button
+          type="submit"
+          variant="dramatic"
+          className="w-full"
+          size="lg"
+          disabled={!isValid || isLoading}
+        >
           {isLoading ? (
             <span className="flex items-center gap-2">
               <span className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
-              분석 중...
+              운명을 해독하는 중...
             </span>
           ) : (
-            "사주 분석하기"
+            "운명 해독 시작"
           )}
         </Button>
       </form>

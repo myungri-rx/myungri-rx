@@ -12,34 +12,43 @@ interface DaeunTimelineProps {
 
 export function DaeunTimeline({ daeunList, currentDaeun, currentSeun, nextSeun }: DaeunTimelineProps) {
   return (
-    <div className="space-y-4">
+    <div className="space-y-6">
       {/* 대운 Timeline */}
       <div>
-        <h4 className="text-sm font-medium text-text-secondary mb-3">대운 흐름</h4>
-        <div className="flex gap-1 overflow-x-auto pb-2">
+        <h4 className="text-sm font-medium text-text-secondary font-display mb-3">대운 흐름</h4>
+        <div className="relative flex gap-2 overflow-x-auto pb-3">
+          {/* Connecting gold line */}
+          <div
+            className="absolute top-1/2 left-0 right-0 h-px z-0"
+            style={{
+              background: "linear-gradient(90deg, transparent 0%, rgba(212,175,55,0.2) 10%, rgba(212,175,55,0.2) 90%, transparent 100%)",
+            }}
+          />
           {daeunList.map((daeun, i) => {
-            const isCurrent =
-              daeun.startAge === currentDaeun.startAge;
+            const isCurrent = daeun.startAge === currentDaeun.startAge;
             return (
               <div
                 key={i}
                 className={cn(
-                  "flex-shrink-0 w-20 rounded-lg p-2 text-center transition-colors",
+                  "relative z-10 flex-shrink-0 w-24 rounded-xl p-3 text-center transition-all duration-300",
                   isCurrent
-                    ? "bg-primary/30 border border-primary"
-                    : "bg-surface/50 border border-text-secondary/10",
+                    ? "glass-card-elevated border-primary/50 shadow-[0_0_15px_rgba(212,175,55,0.2)] animate-pulse-glow"
+                    : "glass-card",
                 )}
               >
-                <div className="text-lg font-bold text-text-primary">
+                <div className="text-xl md:text-2xl font-bold font-display text-text-primary">
                   {daeun.stemHanja}{daeun.branchHanja}
                 </div>
-                <div className="text-[10px] text-text-secondary">
+                <div className="text-[10px] text-text-secondary mt-0.5">
                   {daeun.stem}{daeun.branch}
                 </div>
-                <div className="text-xs text-accent mt-1">{daeun.tenGod}</div>
+                <div className="text-xs text-accent mt-1 font-medium">{daeun.tenGod}</div>
                 <div className="text-[10px] text-text-secondary mt-0.5">
                   {daeun.startAge}~{daeun.endAge}세
                 </div>
+                {isCurrent && (
+                  <div className="mt-1 text-[9px] text-accent font-bold">현재</div>
+                )}
               </div>
             );
           })}
@@ -47,22 +56,22 @@ export function DaeunTimeline({ daeunList, currentDaeun, currentSeun, nextSeun }
       </div>
 
       {/* 세운 */}
-      <div className="grid grid-cols-2 gap-3">
-        <div className="rounded-lg bg-primary/20 border border-primary/30 p-3 text-center">
-          <div className="text-xs text-text-secondary mb-1">올해 세운 ({currentSeun.year})</div>
-          <div className="text-xl font-bold text-text-primary">
+      <div className="grid grid-cols-2 gap-4">
+        <div className="glass-card-elevated !border-primary/30 p-4 text-center">
+          <div className="text-xs text-accent mb-1 font-medium">올해 세운 ({currentSeun.year})</div>
+          <div className="text-2xl md:text-3xl font-bold font-display text-text-primary mt-1">
             {currentSeun.stemHanja}{currentSeun.branchHanja}
           </div>
-          <div className="text-xs text-text-secondary">{currentSeun.stem}{currentSeun.branch}</div>
-          <div className="text-sm text-accent mt-1">{currentSeun.tenGod}</div>
+          <div className="text-xs text-text-secondary mt-1">{currentSeun.stem}{currentSeun.branch}</div>
+          <div className="text-sm text-accent mt-1 font-medium">{currentSeun.tenGod}</div>
         </div>
-        <div className="rounded-lg bg-surface/50 border border-text-secondary/10 p-3 text-center">
+        <div className="glass-card p-4 text-center">
           <div className="text-xs text-text-secondary mb-1">내년 세운 ({nextSeun.year})</div>
-          <div className="text-xl font-bold text-text-primary">
+          <div className="text-2xl md:text-3xl font-bold font-display text-text-primary mt-1">
             {nextSeun.stemHanja}{nextSeun.branchHanja}
           </div>
-          <div className="text-xs text-text-secondary">{nextSeun.stem}{nextSeun.branch}</div>
-          <div className="text-sm text-accent mt-1">{nextSeun.tenGod}</div>
+          <div className="text-xs text-text-secondary mt-1">{nextSeun.stem}{nextSeun.branch}</div>
+          <div className="text-sm text-accent mt-1 font-medium">{nextSeun.tenGod}</div>
         </div>
       </div>
     </div>

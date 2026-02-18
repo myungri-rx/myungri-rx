@@ -10,11 +10,11 @@ interface ConcernInputProps {
 export function ConcernInput({ value, onChange }: ConcernInputProps) {
   return (
     <Textarea
-      label="요즘 가장 고민되는 점이 있나요? (선택)"
+      label="지금, 가장 풀고 싶은 운명의 수수께끼는?"
       id="concern"
       value={value}
       onChange={(e) => onChange(e.target.value)}
-      placeholder="예: 이직을 고민하고 있어요, 연애가 잘 안 풀려요, 재테크 방향이 궁금해요..."
+      placeholder="예: 이직의 때가 온 걸까요, 이 사람과의 인연은 어떤 의미일까요..."
       rows={3}
     />
   );

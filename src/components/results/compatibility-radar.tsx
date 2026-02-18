@@ -1,5 +1,7 @@
 "use client";
 
+import { useState, useEffect } from "react";
+
 interface RadarData {
   label: string;
   value: number; // 0-100
@@ -15,6 +17,29 @@ export function CompatibilityRadar({ data, totalScore }: CompatibilityRadarProps
   const cy = 150;
   const r = 120;
   const n = data.length;
+
+  const [animatedScore, setAnimatedScore] = useState(0);
+  const [showPolygon, setShowPolygon] = useState(false);
+
+  useEffect(() => {
+    // Animate score counter
+    const duration = 1000;
+    const start = Date.now();
+    const timer = setInterval(() => {
+      const elapsed = Date.now() - start;
+      const progress = Math.min(elapsed / duration, 1);
+      setAnimatedScore(Math.round(totalScore * progress));
+      if (progress >= 1) clearInterval(timer);
+    }, 16);
+
+    // Show polygon after short delay
+    const polyTimer = setTimeout(() => setShowPolygon(true), 200);
+
+    return () => {
+      clearInterval(timer);
+      clearTimeout(polyTimer);
+    };
+  }, [totalScore]);
 
   const getPoint = (index: number, value: number) => {
     const angle = (Math.PI * 2 * index) / n - Math.PI / 2;
@@ -46,7 +71,7 @@ export function CompatibilityRadar({ data, totalScore }: CompatibilityRadarProps
             cy={cy}
             r={(pct / 100) * r}
             fill="none"
-            stroke="rgba(203,213,225,0.1)"
+            stroke="rgba(203,213,225,0.08)"
             strokeWidth="1"
           />
         ))}
@@ -59,27 +84,50 @@ export function CompatibilityRadar({ data, totalScore }: CompatibilityRadarProps
             y1={cy}
             x2={end.x}
             y2={end.y}
-            stroke="rgba(203,213,225,0.15)"
+            stroke="rgba(203,213,225,0.1)"
             strokeWidth="1"
           />
         ))}
 
-        {/* Data polygon */}
+        {/* Data polygon with animation */}
         <polygon
           points={polygonPoints}
-          fill="rgba(107,33,168,0.3)"
+          fill="url(#radarGradient)"
           stroke="#6B21A8"
           strokeWidth="2"
+          className={showPolygon ? "animate-expand-polygon" : "opacity-0"}
+          style={{ transformOrigin: `${cx}px ${cy}px` }}
         />
 
-        {/* Data points */}
-        {points.map((p, i) => (
-          <circle key={i} cx={p.x} cy={p.y} r="4" fill="#D4AF37" />
-        ))}
+        {/* Gradient definition */}
+        <defs>
+          <radialGradient id="radarGradient" cx="50%" cy="50%" r="50%">
+            <stop offset="0%" stopColor="rgba(168,85,247,0.4)" />
+            <stop offset="100%" stopColor="rgba(107,33,168,0.15)" />
+          </radialGradient>
+        </defs>
+
+        {/* Data points with gold glow */}
+        {showPolygon &&
+          points.map((p, i) => (
+            <circle
+              key={i}
+              cx={p.x}
+              cy={p.y}
+              r="5"
+              fill="#D4AF37"
+              className="animate-count-up"
+              style={{
+                animationDelay: `${i * 100 + 500}ms`,
+                animationFillMode: "backwards",
+                filter: "drop-shadow(0 0 4px rgba(212,175,55,0.5))",
+              }}
+            />
+          ))}
 
         {/* Labels */}
         {data.map((d, i) => {
-          const labelPoint = getPoint(i, 115);
+          const labelPoint = getPoint(i, 118);
           return (
             <text
               key={i}
@@ -87,8 +135,8 @@ export function CompatibilityRadar({ data, totalScore }: CompatibilityRadarProps
               y={labelPoint.y}
               textAnchor="middle"
               dominantBaseline="middle"
-              className="text-xs fill-text-secondary"
-              fontSize="11"
+              className="fill-text-secondary"
+              fontSize="10"
             >
               {d.label}
             </text>
@@ -100,14 +148,14 @@ export function CompatibilityRadar({ data, totalScore }: CompatibilityRadarProps
           x={cx}
           y={cy - 8}
           textAnchor="middle"
-          className="fill-accent font-bold"
-          fontSize="28"
+          className="fill-accent font-bold font-display"
+          fontSize="32"
         >
-          {totalScore}
+          {animatedScore}
         </text>
         <text
           x={cx}
-          y={cy + 14}
+          y={cy + 16}
           textAnchor="middle"
           className="fill-text-secondary"
           fontSize="11"
@@ -116,12 +164,15 @@ export function CompatibilityRadar({ data, totalScore }: CompatibilityRadarProps
         </text>
       </svg>
 
-      {/* Score labels */}
-      <div className="grid grid-cols-3 gap-2 w-full mt-2">
+      {/* Score labels as pills */}
+      <div className="grid grid-cols-3 gap-2 w-full mt-3">
         {data.map((d) => (
-          <div key={d.label} className="text-center">
-            <div className="text-xs text-text-secondary">{d.label}</div>
-            <div className="text-sm font-medium text-text-primary">{d.value}점</div>
+          <div
+            key={d.label}
+            className="text-center glass-card !p-2 !rounded-xl"
+          >
+            <div className="text-[10px] text-text-secondary">{d.label}</div>
+            <div className="text-sm font-bold text-accent">{d.value}점</div>
           </div>
         ))}
       </div>

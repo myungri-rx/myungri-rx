@@ -35,10 +35,14 @@ export function BirthInputForm({ value, onChange, label }: BirthInputFormProps) 
   };
 
   return (
-    <div className="space-y-4">
-      {label && <h3 className="text-lg font-medium text-accent">{label}</h3>}
+    <div className="space-y-5">
+      {label && (
+        <h3 className="text-lg font-medium text-accent font-display border-l-2 border-accent pl-3">
+          {label}
+        </h3>
+      )}
 
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-2 gap-5">
         <Input
           label="이름"
           id={`name-${label}`}
@@ -59,7 +63,7 @@ export function BirthInputForm({ value, onChange, label }: BirthInputFormProps) 
         />
       </div>
 
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-2 gap-5">
         <Input
           label="생년월일"
           id={`birthDate-${label}`}
@@ -77,7 +81,7 @@ export function BirthInputForm({ value, onChange, label }: BirthInputFormProps) 
         />
       </div>
 
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-2 gap-5">
         <Select
           label="달력 유형"
           id={`calendar-${label}`}
@@ -91,12 +95,12 @@ export function BirthInputForm({ value, onChange, label }: BirthInputFormProps) 
 
         {value.calendarType === "lunar" && (
           <div className="flex items-end">
-            <label className="flex items-center gap-2 h-10 text-sm text-text-secondary">
+            <label className="flex items-center gap-2 h-12 text-sm text-text-secondary">
               <input
                 type="checkbox"
                 checked={value.isLeapMonth || false}
                 onChange={(e) => update({ isLeapMonth: e.target.checked })}
-                className="rounded border-text-secondary/20 bg-surface"
+                className="rounded border-white/[0.08] bg-white/[0.03]"
               />
               윤달 여부
             </label>

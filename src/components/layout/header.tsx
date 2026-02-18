@@ -1,15 +1,33 @@
 "use client";
 
-export function Header() {
+import { cn } from "@/lib/utils";
+
+interface HeaderProps {
+  compact?: boolean;
+}
+
+export function Header({ compact = false }: HeaderProps) {
+  if (!compact) return null;
+
   return (
-    <header className="text-center py-8 px-4">
-      <h1 className="text-3xl md:text-4xl font-bold">
-        <span className="text-accent">명리</span>
-        <span className="text-text-primary">처방전</span>
-      </h1>
-      <p className="mt-2 text-text-secondary text-sm">
-        AI 기반 사주 명리 분석 — 당신의 고민에 명리학이 처방을 내립니다
-      </p>
+    <header
+      className={cn(
+        "sticky top-0 z-50 border-b border-white/[0.05] px-4 py-3",
+      )}
+      style={{
+        background: "rgba(15,23,42,0.8)",
+        backdropFilter: "blur(12px)",
+        WebkitBackdropFilter: "blur(12px)",
+      }}
+    >
+      <div className="mx-auto max-w-5xl flex items-center justify-between">
+        <h1 className="font-display font-bold text-xl text-gradient-gold">
+          사주전쟁49
+        </h1>
+        <p className="text-xs text-text-secondary hidden md:block">
+          30년 전문가의 사주명리 분석
+        </p>
+      </div>
     </header>
   );
 }

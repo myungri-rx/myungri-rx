@@ -14,6 +14,22 @@
   body {
     @apply bg-background text-text-primary;
   }
+
+  /* Custom scrollbar (dark theme) */
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: rgba(203, 213, 225, 0.15);
+    border-radius: 3px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: rgba(203, 213, 225, 0.3);
+  }
 }
 
 @layer components {
@@ -47,5 +63,44 @@
   }
   .ohaeng-bg-water {
     @apply bg-ohaeng-water/20;
+  }
+
+  /* Glass morphism cards */
+  .glass-card {
+    @apply bg-white/[0.03] backdrop-blur-md border border-white/[0.08] rounded-2xl;
+  }
+
+  .glass-card-elevated {
+    @apply bg-white/[0.03] backdrop-blur-md border border-white/[0.08] rounded-2xl shadow-lg shadow-black/20;
+  }
+
+  /* Gold gradient text */
+  .text-gradient-gold {
+    background: linear-gradient(135deg, #D4AF37 0%, #E5C76B 50%, #D4AF37 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  /* Slide up animation */
+  .animate-slide-up {
+    animation: slide-up 0.5s ease-out forwards;
+  }
+
+  /* Ohaeng glow box-shadows */
+  .ohaeng-glow-wood {
+    box-shadow: 0 0 12px 2px rgba(34, 197, 94, 0.2);
+  }
+  .ohaeng-glow-fire {
+    box-shadow: 0 0 12px 2px rgba(239, 68, 68, 0.2);
+  }
+  .ohaeng-glow-earth {
+    box-shadow: 0 0 12px 2px rgba(234, 179, 8, 0.2);
+  }
+  .ohaeng-glow-metal {
+    box-shadow: 0 0 12px 2px rgba(248, 250, 252, 0.15);
+  }
+  .ohaeng-glow-water {
+    box-shadow: 0 0 12px 2px rgba(59, 130, 246, 0.2);
   }
 }

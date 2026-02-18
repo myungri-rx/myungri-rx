@@ -1,6 +1,9 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
+import { StarField } from "@/components/effects/star-field";
+import { HeroSection } from "@/components/layout/hero-section";
+import { AnalysisLoading } from "@/components/effects/analysis-loading";
 import { Header } from "@/components/layout/header";
 import { Footer } from "@/components/layout/footer";
 import { Tabs } from "@/components/ui/tabs";
@@ -18,80 +21,127 @@ const TABS = [
 
 export default function Home() {
   const [activeTab, setActiveTab] = useState("personal");
+  const [showHero, setShowHero] = useState(true);
+  const [showLoading, setShowLoading] = useState(false);
+  const formRef = useRef<HTMLDivElement>(null);
   const resultRef = useRef<HTMLDivElement>(null);
 
   const analysis = useSajuAnalysis();
   const compatibility = useSajuCompatibility();
 
-  // Scroll to results when data is ready
+  const hasResults =
+    !!analysis.sajuData ||
+    (!!compatibility.person1Data && !!compatibility.person2Data);
+
+  // Show loading screen when loading starts, hide when data arrives
   useEffect(() => {
-    if (analysis.sajuData || compatibility.person1Data) {
-      resultRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    if (analysis.isLoading || compatibility.isLoading) {
+      setShowLoading(true);
     }
-  }, [analysis.sajuData, compatibility.person1Data]);
+  }, [analysis.isLoading, compatibility.isLoading]);
+
+  // Hide loading and scroll to results when data is ready
+  useEffect(() => {
+    if (hasResults) {
+      setShowLoading(false);
+      setTimeout(() => {
+        resultRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+      }, 300);
+    }
+  }, [hasResults]);
+
+  const handleStart = () => {
+    setShowHero(false);
+    setTimeout(() => {
+      formRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }, 100);
+  };
 
   const handleTabChange = (id: string) => {
     setActiveTab(id);
     analysis.reset();
     compatibility.reset();
+    setShowLoading(false);
   };
 
   return (
-    <div className="min-h-screen bg-background">
-      <div className="mx-auto max-w-2xl px-4">
-        <Header />
+    <div className="min-h-screen bg-background relative overflow-hidden">
+      {/* Star field background */}
+      <StarField />
 
-        <Tabs tabs={TABS} activeTab={activeTab} onTabChange={handleTabChange} />
+      {/* Sticky header (visible after hero) */}
+      <Header compact={!showHero} />
 
-        <div className="mt-6">
-          {activeTab === "personal" ? (
-            <>
+      {/* Hero section */}
+      {showHero && <HeroSection onStart={handleStart} />}
+
+      {/* Loading overlay */}
+      <AnalysisLoading isVisible={showLoading} />
+
+      {/* Form section */}
+      {!showHero && (
+        <section
+          ref={formRef}
+          className="relative z-10 mx-auto max-w-4xl px-4 sm:px-6 lg:px-8 py-12"
+        >
+          <Tabs tabs={TABS} activeTab={activeTab} onTabChange={handleTabChange} />
+
+          <div className="mt-8">
+            {activeTab === "personal" ? (
               <AnalysisForm
                 onSubmit={analysis.analyze}
                 isLoading={analysis.isLoading}
               />
-              {analysis.error && (
-                <div className="mt-4 rounded-lg bg-red-500/10 border border-red-500/20 p-4 text-sm text-red-400">
-                  {analysis.error}
-                </div>
-              )}
-              {analysis.sajuData && (
-                <div ref={resultRef} className="mt-6">
-                  <PersonalResult
-                    sajuData={analysis.sajuData}
-                    streamedText={analysis.streamedText}
-                    isStreaming={analysis.isLoading}
-                  />
-                </div>
-              )}
-            </>
-          ) : (
-            <>
+            ) : (
               <CompatibilityForm
                 onSubmit={compatibility.analyze}
                 isLoading={compatibility.isLoading}
               />
-              {compatibility.error && (
-                <div className="mt-4 rounded-lg bg-red-500/10 border border-red-500/20 p-4 text-sm text-red-400">
-                  {compatibility.error}
-                </div>
-              )}
-              {compatibility.person1Data && compatibility.person2Data && (
-                <div ref={resultRef} className="mt-6">
-                  <CompatibilityResult
-                    person1={compatibility.person1Data}
-                    person2={compatibility.person2Data}
-                    streamedText={compatibility.streamedText}
-                    isStreaming={compatibility.isLoading}
-                  />
-                </div>
-              )}
-            </>
-          )}
-        </div>
+            )}
 
-        <Footer />
-      </div>
+            {/* Error messages */}
+            {analysis.error && (
+              <div className="mt-4 glass-card !bg-red-500/10 !border-red-500/20 p-4 text-sm text-red-400">
+                {analysis.error}
+              </div>
+            )}
+            {compatibility.error && (
+              <div className="mt-4 glass-card !bg-red-500/10 !border-red-500/20 p-4 text-sm text-red-400">
+                {compatibility.error}
+              </div>
+            )}
+          </div>
+        </section>
+      )}
+
+      {/* Results section */}
+      {hasResults && (
+        <section
+          ref={resultRef}
+          className="relative z-10 mx-auto max-w-5xl px-4 sm:px-6 lg:px-8 py-12"
+        >
+          {activeTab === "personal" && analysis.sajuData && (
+            <PersonalResult
+              sajuData={analysis.sajuData}
+              streamedText={analysis.streamedText}
+              isStreaming={analysis.isLoading}
+            />
+          )}
+          {activeTab === "compatibility" &&
+            compatibility.person1Data &&
+            compatibility.person2Data && (
+              <CompatibilityResult
+                person1={compatibility.person1Data}
+                person2={compatibility.person2Data}
+                streamedText={compatibility.streamedText}
+                isStreaming={compatibility.isLoading}
+              />
+            )}
+        </section>
+      )}
+
+      {/* Footer */}
+      {!showHero && <Footer />}
     </div>
   );
 }

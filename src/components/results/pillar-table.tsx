@@ -1,5 +1,6 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
 import { STEM_TO_OHAENG, BRANCH_TO_OHAENG } from "@/lib/constants/stems-branches";
 import type { FourPillars, FourPillarsHanja, TenGods, TwelveStages } from "@/lib/types";
@@ -20,6 +21,14 @@ const OHAENG_BG: Record<string, string> = {
   수: "bg-ohaeng-water/10",
 };
 
+const OHAENG_GLOW: Record<string, string> = {
+  목: "ohaeng-glow-wood",
+  화: "ohaeng-glow-fire",
+  토: "ohaeng-glow-earth",
+  금: "ohaeng-glow-metal",
+  수: "ohaeng-glow-water",
+};
+
 const PILLAR_LABELS = ["시주", "일주", "월주", "년주"];
 const PALACE_LABELS = ["자녀궁", "본인궁", "부모궁", "조상궁"];
 
@@ -31,6 +40,21 @@ interface PillarTableProps {
 }
 
 export function PillarTable({ pillars, pillarsHanja, tenGods, twelveStages }: PillarTableProps) {
+  const [revealedColumns, setRevealedColumns] = useState(0);
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setRevealedColumns((prev) => {
+        if (prev >= 4) {
+          clearInterval(timer);
+          return prev;
+        }
+        return prev + 1;
+      });
+    }, 400);
+    return () => clearInterval(timer);
+  }, []);
+
   const columns = [
     {
       pillar: pillars.hour,
@@ -63,105 +87,103 @@ export function PillarTable({ pillars, pillarsHanja, tenGods, twelveStages }: Pi
   ];
 
   return (
-    <div className="overflow-x-auto">
-      <table className="w-full text-center">
-        <thead>
-          <tr>
-            {PILLAR_LABELS.map((label, i) => (
-              <th key={label} className="pb-1 text-xs text-text-secondary font-normal">
-                {label}
-                <div className="text-[10px] text-text-secondary/60">{PALACE_LABELS[i]}</div>
-              </th>
-            ))}
-          </tr>
-        </thead>
-        <tbody>
-          {/* 십신 row */}
-          <tr>
-            {columns.map((col, i) => (
-              <td key={`god-${i}`} className="py-1 text-xs text-text-secondary">
-                {col.stemGod || "—"}
-              </td>
-            ))}
-          </tr>
-          {/* 천간 row */}
-          <tr>
-            {columns.map((col, i) => {
-              if (!col.pillar) {
-                return (
-                  <td key={`stem-${i}`} className="py-2">
-                    <div className="mx-auto w-12 h-12 rounded-lg bg-surface/50 flex items-center justify-center text-text-secondary/30 text-lg">
-                      ?
-                    </div>
-                  </td>
-                );
-              }
-              const ohaeng = STEM_TO_OHAENG[col.pillar.stem];
-              return (
-                <td key={`stem-${i}`} className="py-2">
-                  <div
-                    className={cn(
-                      "mx-auto w-12 h-12 rounded-lg flex flex-col items-center justify-center",
-                      ohaeng && OHAENG_BG[ohaeng],
-                    )}
-                  >
-                    <span className={cn("text-xl font-bold", ohaeng && OHAENG_COLOR[ohaeng])}>
-                      {col.hanja?.stem}
-                    </span>
-                    <span className="text-[10px] text-text-secondary">{col.pillar.stem}</span>
-                  </div>
-                </td>
-              );
-            })}
-          </tr>
-          {/* 지지 row */}
-          <tr>
-            {columns.map((col, i) => {
-              if (!col.pillar) {
-                return (
-                  <td key={`branch-${i}`} className="py-2">
-                    <div className="mx-auto w-12 h-12 rounded-lg bg-surface/50 flex items-center justify-center text-text-secondary/30 text-lg">
-                      ?
-                    </div>
-                  </td>
-                );
-              }
-              const ohaeng = BRANCH_TO_OHAENG[col.pillar.branch];
-              return (
-                <td key={`branch-${i}`} className="py-2">
-                  <div
-                    className={cn(
-                      "mx-auto w-12 h-12 rounded-lg flex flex-col items-center justify-center",
-                      ohaeng && OHAENG_BG[ohaeng],
-                    )}
-                  >
-                    <span className={cn("text-xl font-bold", ohaeng && OHAENG_COLOR[ohaeng])}>
-                      {col.hanja?.branch}
-                    </span>
-                    <span className="text-[10px] text-text-secondary">{col.pillar.branch}</span>
-                  </div>
-                </td>
-              );
-            })}
-          </tr>
-          {/* 십신 (branch) row */}
-          <tr>
-            {columns.map((col, i) => (
-              <td key={`bgod-${i}`} className="py-1 text-xs text-text-secondary">
-                {col.branchGod || "—"}
-              </td>
-            ))}
-          </tr>
-          {/* 12운성 row */}
-          <tr>
-            {columns.map((col, i) => (
-              <td key={`stage-${i}`} className="py-1 text-[10px] text-accent/70">
-                {col.stage || "—"}
-              </td>
-            ))}
-          </tr>
-        </tbody>
-      </table>
+    <div className="grid grid-cols-4 gap-3 md:gap-4">
+      {columns.map((col, i) => {
+        const isRevealed = i < revealedColumns;
+        const stemOhaeng = col.pillar ? STEM_TO_OHAENG[col.pillar.stem] : null;
+        const branchOhaeng = col.pillar ? BRANCH_TO_OHAENG[col.pillar.branch] : null;
+
+        return (
+          <div
+            key={i}
+            className={cn(
+              "flex flex-col items-center gap-1 transition-all duration-500",
+              isRevealed ? "animate-card-flip" : "opacity-0",
+            )}
+            style={{
+              animationDelay: `${i * 400}ms`,
+              animationFillMode: "backwards",
+            }}
+          >
+            {/* Label */}
+            <div className="text-xs text-text-secondary font-medium">
+              {PILLAR_LABELS[i]}
+            </div>
+            <div className="text-[10px] text-text-secondary/60">
+              {PALACE_LABELS[i]}
+            </div>
+
+            {/* 십신 (stem) */}
+            <div className="text-xs text-text-secondary mt-1">
+              {col.stemGod || "—"}
+            </div>
+
+            {/* 천간 cell */}
+            {!col.pillar ? (
+              <div className="w-16 h-16 md:w-20 md:h-20 rounded-xl bg-white/[0.03] border border-white/[0.06] flex items-center justify-center text-text-secondary/30 text-2xl">
+                ?
+              </div>
+            ) : (
+              <div
+                className={cn(
+                  "w-16 h-16 md:w-20 md:h-20 rounded-xl flex flex-col items-center justify-center",
+                  stemOhaeng && OHAENG_BG[stemOhaeng],
+                  stemOhaeng && OHAENG_GLOW[stemOhaeng],
+                )}
+              >
+                <span
+                  className={cn(
+                    "text-2xl md:text-3xl font-bold font-display",
+                    stemOhaeng && OHAENG_COLOR[stemOhaeng],
+                  )}
+                >
+                  {col.hanja?.stem}
+                </span>
+                <span className="text-[10px] text-text-secondary">
+                  {col.pillar.stem}
+                </span>
+              </div>
+            )}
+
+            {/* 지지 cell */}
+            {!col.pillar ? (
+              <div className="w-16 h-16 md:w-20 md:h-20 rounded-xl bg-white/[0.03] border border-white/[0.06] flex items-center justify-center text-text-secondary/30 text-2xl">
+                ?
+              </div>
+            ) : (
+              <div
+                className={cn(
+                  "w-16 h-16 md:w-20 md:h-20 rounded-xl flex flex-col items-center justify-center",
+                  branchOhaeng && OHAENG_BG[branchOhaeng],
+                  branchOhaeng && OHAENG_GLOW[branchOhaeng],
+                )}
+              >
+                <span
+                  className={cn(
+                    "text-2xl md:text-3xl font-bold font-display",
+                    branchOhaeng && OHAENG_COLOR[branchOhaeng],
+                  )}
+                >
+                  {col.hanja?.branch}
+                </span>
+                <span className="text-[10px] text-text-secondary">
+                  {col.pillar.branch}
+                </span>
+              </div>
+            )}
+
+            {/* 십신 (branch) */}
+            <div className="text-xs text-text-secondary">
+              {col.branchGod || "—"}
+            </div>
+
+            {/* 12운성 */}
+            <div className="text-[10px] text-accent/70">
+              {col.stage || "—"}
+            </div>
+          </div>
+        );
+      })}
     </div>
   );
 }

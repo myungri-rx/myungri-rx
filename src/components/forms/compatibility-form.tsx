@@ -35,19 +35,50 @@ export function CompatibilityForm({ onSubmit, isLoading }: CompatibilityFormProp
   };
 
   return (
-    <Card>
+    <Card variant="elevated">
+      <h2 className="font-display text-xl font-bold text-gradient-gold mb-6">
+        두 사람의 운명
+      </h2>
       <form onSubmit={handleSubmit} className="space-y-8">
-        <BirthInputForm value={person1} onChange={setPerson1} label="나의 정보" />
-        <div className="border-t border-text-secondary/10" />
-        <BirthInputForm value={person2} onChange={setPerson2} label="상대방 정보" />
-        <Button type="submit" className="w-full" size="lg" disabled={!isValid || isLoading}>
+        <div className="glass-card !p-5">
+          <BirthInputForm value={person1} onChange={setPerson1} label="나의 정보" />
+        </div>
+
+        {/* VS divider */}
+        <div className="flex items-center justify-center gap-4">
+          <div
+            className="h-px flex-1"
+            style={{
+              background: "linear-gradient(90deg, transparent, rgba(212,175,55,0.3))",
+            }}
+          />
+          <span className="text-accent font-display font-bold text-lg">VS</span>
+          <div
+            className="h-px flex-1"
+            style={{
+              background: "linear-gradient(90deg, rgba(212,175,55,0.3), transparent)",
+            }}
+          />
+        </div>
+
+        <div className="glass-card !p-5">
+          <BirthInputForm value={person2} onChange={setPerson2} label="상대방 정보" />
+        </div>
+
+        <Button
+          type="submit"
+          variant="dramatic"
+          className="w-full"
+          size="lg"
+          disabled={!isValid || isLoading}
+        >
           {isLoading ? (
             <span className="flex items-center gap-2">
               <span className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
-              궁합 분석 중...
+              궁합을 분석하는 중...
             </span>
           ) : (
-            "궁합 보기"
+            "궁합 전쟁 시작"
           )}
         </Button>
       </form>
