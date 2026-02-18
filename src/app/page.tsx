@@ -8,7 +8,7 @@ import { Header } from "@/components/layout/header";
 import { Footer } from "@/components/layout/footer";
 import { Tabs } from "@/components/ui/tabs";
 import { AnalysisForm } from "@/components/forms/analysis-form";
-import { CompatibilityForm } from "@/components/forms/compatibility-form";
+import { CompatibilityForm, type RelationshipType } from "@/components/forms/compatibility-form";
 import { PersonalResult } from "@/components/results/personal-result";
 import { CompatibilityResult } from "@/components/results/compatibility-result";
 import { useSajuAnalysis } from "@/hooks/use-saju-analysis";
@@ -16,7 +16,7 @@ import { useSajuCompatibility } from "@/hooks/use-saju-compatibility";
 
 const TABS = [
   { id: "personal", label: "내 사주 보기" },
-  { id: "compatibility", label: "연인 궁합" },
+  { id: "compatibility", label: "궁합 분석" },
 ];
 
 export default function Home() {
@@ -50,7 +50,8 @@ export default function Home() {
     }
   }, [hasResults]);
 
-  const handleStart = () => {
+  const handleStart = (tab: "personal" | "compatibility") => {
+    setActiveTab(tab);
     setShowHero(false);
     setTimeout(() => {
       formRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
@@ -94,7 +95,7 @@ export default function Home() {
               />
             ) : (
               <CompatibilityForm
-                onSubmit={compatibility.analyze}
+                onSubmit={(p1, p2, relType: RelationshipType) => compatibility.analyze(p1, p2, relType)}
                 isLoading={compatibility.isLoading}
               />
             )}

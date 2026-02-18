@@ -10,7 +10,7 @@ import type { SajuInput } from "@/lib/types";
 const DEFAULT_INPUT: SajuInput = {
   name: "",
   gender: "male",
-  birthDate: "",
+  birthDate: "2000-01-01",
   birthTime: "모름",
   calendarType: "solar",
   isLeapMonth: false,

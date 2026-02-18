@@ -4,7 +4,7 @@ import { DecorativeMoon } from "@/components/effects/decorative-moon";
 import { Button } from "@/components/ui/button";
 
 interface HeroSectionProps {
-  onStart: () => void;
+  onStart: (tab: "personal" | "compatibility") => void;
 }
 
 // 12 Earthly Branches for the rotating ring
@@ -103,14 +103,24 @@ export function HeroSection({ onStart }: HeroSectionProps) {
       </p>
 
       {/* CTA */}
-      <Button
-        variant="dramatic"
-        size="lg"
-        onClick={onStart}
-        className="relative z-10 text-lg px-10 py-6 h-auto"
-      >
-        운명 해독 시작
-      </Button>
+      <div className="relative z-10 flex flex-col sm:flex-row gap-3">
+        <Button
+          variant="dramatic"
+          size="lg"
+          onClick={() => onStart("personal")}
+          className="text-lg px-8 py-6 h-auto"
+        >
+          개인 사주 분석
+        </Button>
+        <Button
+          variant="dramatic"
+          size="lg"
+          onClick={() => onStart("compatibility")}
+          className="text-lg px-8 py-6 h-auto"
+        >
+          궁합 분석
+        </Button>
+      </div>
 
       {/* Scroll indicator */}
       <div className="absolute bottom-8 left-1/2 -translate-x-1/2 animate-bounce">

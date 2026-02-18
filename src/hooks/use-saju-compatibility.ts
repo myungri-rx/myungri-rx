@@ -11,7 +11,7 @@ export function useSajuCompatibility() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const analyze = useCallback(async (input1: SajuInput, input2: SajuInput) => {
+  const analyze = useCallback(async (input1: SajuInput, input2: SajuInput, relationshipType: string = "romantic") => {
     setError(null);
     setStreamedText("");
     setIsLoading(true);
@@ -25,7 +25,7 @@ export function useSajuCompatibility() {
       const response = await fetch("/api/compatibility", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ person1: data1, person2: data2 }),
+        body: JSON.stringify({ person1: data1, person2: data2, relationshipType }),
       });
 
       if (!response.ok) {
