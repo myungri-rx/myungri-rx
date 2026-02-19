@@ -1,5 +1,6 @@
 "use client";
 
+import { useMemo } from "react";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import type { SajuInput } from "@/lib/types";
@@ -23,6 +24,23 @@ function getTimeName(hour: number): string {
   return names[hour] || "";
 }
 
+// Year options: 1920–2026
+const YEAR_OPTIONS = Array.from({ length: 2026 - 1920 + 1 }, (_, i) => {
+  const y = String(2026 - i);
+  return { value: y, label: `${y}년` };
+});
+
+// Month options: 1–12
+const MONTH_OPTIONS = Array.from({ length: 12 }, (_, i) => {
+  const m = String(i + 1).padStart(2, "0");
+  return { value: m, label: `${i + 1}월` };
+});
+
+// Get days in a given month
+function getDaysInMonth(year: number, month: number): number {
+  return new Date(year, month, 0).getDate();
+}
+
 interface BirthInputFormProps {
   value: SajuInput;
   onChange: (value: SajuInput) => void;
@@ -33,6 +51,28 @@ export function BirthInputForm({ value, onChange, label }: BirthInputFormProps) 
   const update = (partial: Partial<SajuInput>) => {
     onChange({ ...value, ...partial });
   };
+
+  // Parse birthDate (YYYY-MM-DD)
+  const [birthYear, birthMonth, birthDay] = useMemo(() => {
+    const parts = value.birthDate.split("-");
+    return [parts[0] || "2000", parts[1] || "01", parts[2] || "01"];
+  }, [value.birthDate]);
+
+  const updateBirthDate = (year: string, month: string, day: string) => {
+    // Clamp day to max days in the selected month
+    const maxDay = getDaysInMonth(Number(year), Number(month));
+    const clampedDay = String(Math.min(Number(day), maxDay)).padStart(2, "0");
+    update({ birthDate: `${year}-${month}-${clampedDay}` });
+  };
+
+  // Day options based on selected year/month
+  const dayOptions = useMemo(() => {
+    const maxDay = getDaysInMonth(Number(birthYear), Number(birthMonth));
+    return Array.from({ length: maxDay }, (_, i) => {
+      const d = String(i + 1).padStart(2, "0");
+      return { value: d, label: `${i + 1}일` };
+    });
+  }, [birthYear, birthMonth]);
 
   return (
     <div className="space-y-5">
@@ -63,15 +103,32 @@ export function BirthInputForm({ value, onChange, label }: BirthInputFormProps) 
         />
       </div>
 
-      <div className="grid grid-cols-2 gap-5">
-        <Input
-          label="생년월일"
-          id={`birthDate-${label}`}
-          type="date"
-          value={value.birthDate}
-          onChange={(e) => update({ birthDate: e.target.value })}
-        />
+      {/* 생년월일 - 별도 라인, 3개 셀렉트 */}
+      <div>
+        <label className="text-sm text-text-secondary font-display block mb-1.5">생년월일</label>
+        <div className="grid grid-cols-3 gap-3">
+          <Select
+            id={`birthYear-${label}`}
+            value={birthYear}
+            onChange={(e) => updateBirthDate(e.target.value, birthMonth, birthDay)}
+            options={YEAR_OPTIONS}
+          />
+          <Select
+            id={`birthMonth-${label}`}
+            value={birthMonth}
+            onChange={(e) => updateBirthDate(birthYear, e.target.value, birthDay)}
+            options={MONTH_OPTIONS}
+          />
+          <Select
+            id={`birthDay-${label}`}
+            value={birthDay}
+            onChange={(e) => updateBirthDate(birthYear, birthMonth, e.target.value)}
+            options={dayOptions}
+          />
+        </div>
+      </div>
 
+      <div className="grid grid-cols-2 gap-5">
         <Select
           label="태어난 시간"
           id={`birthTime-${label}`}
@@ -79,9 +136,7 @@ export function BirthInputForm({ value, onChange, label }: BirthInputFormProps) 
           onChange={(e) => update({ birthTime: e.target.value })}
           options={HOUR_OPTIONS}
         />
-      </div>
 
-      <div className="grid grid-cols-2 gap-5">
         <Select
           label="달력 유형"
           id={`calendar-${label}`}
@@ -92,21 +147,21 @@ export function BirthInputForm({ value, onChange, label }: BirthInputFormProps) 
             { value: "lunar", label: "음력" },
           ]}
         />
-
-        {value.calendarType === "lunar" && (
-          <div className="flex items-end">
-            <label className="flex items-center gap-2 h-12 text-sm text-text-secondary">
-              <input
-                type="checkbox"
-                checked={value.isLeapMonth || false}
-                onChange={(e) => update({ isLeapMonth: e.target.checked })}
-                className="rounded border-white/[0.08] bg-white/[0.03]"
-              />
-              윤달 여부
-            </label>
-          </div>
-        )}
       </div>
+
+      {value.calendarType === "lunar" && (
+        <div>
+          <label className="flex items-center gap-2 h-12 text-sm text-text-secondary">
+            <input
+              type="checkbox"
+              checked={value.isLeapMonth || false}
+              onChange={(e) => update({ isLeapMonth: e.target.checked })}
+              className="rounded border-white/[0.08] bg-white/[0.03]"
+            />
+            윤달 여부
+          </label>
+        </div>
+      )}
     </div>
   );
 }

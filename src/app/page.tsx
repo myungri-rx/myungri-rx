@@ -22,32 +22,26 @@ const TABS = [
 export default function Home() {
   const [activeTab, setActiveTab] = useState("personal");
   const [showHero, setShowHero] = useState(true);
-  const [showLoading, setShowLoading] = useState(false);
   const formRef = useRef<HTMLDivElement>(null);
   const resultRef = useRef<HTMLDivElement>(null);
+  const prevHasResultsRef = useRef(false);
 
   const analysis = useSajuAnalysis();
   const compatibility = useSajuCompatibility();
 
+  const isCurrentlyLoading = analysis.isLoading || compatibility.isLoading;
   const hasResults =
     !!analysis.sajuData ||
     (!!compatibility.person1Data && !!compatibility.person2Data);
 
-  // Show loading screen when loading starts, hide when data arrives
+  // Scroll to results when data becomes available
   useEffect(() => {
-    if (analysis.isLoading || compatibility.isLoading) {
-      setShowLoading(true);
-    }
-  }, [analysis.isLoading, compatibility.isLoading]);
-
-  // Hide loading and scroll to results when data is ready
-  useEffect(() => {
-    if (hasResults) {
-      setShowLoading(false);
+    if (hasResults && !prevHasResultsRef.current) {
       setTimeout(() => {
         resultRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
       }, 300);
     }
+    prevHasResultsRef.current = hasResults;
   }, [hasResults]);
 
   const handleStart = (tab: "personal" | "compatibility") => {
@@ -62,7 +56,6 @@ export default function Home() {
     setActiveTab(id);
     analysis.reset();
     compatibility.reset();
-    setShowLoading(false);
   };
 
   return (
@@ -77,7 +70,7 @@ export default function Home() {
       {showHero && <HeroSection onStart={handleStart} />}
 
       {/* Loading overlay */}
-      <AnalysisLoading isVisible={showLoading} />
+      <AnalysisLoading isVisible={isCurrentlyLoading && !hasResults} />
 
       {/* Form section */}
       {!showHero && (

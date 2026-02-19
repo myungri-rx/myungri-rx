@@ -13,6 +13,7 @@ export function useSajuAnalysis() {
   const analyze = useCallback(async (input: SajuInput, concern?: string) => {
     setError(null);
     setStreamedText("");
+    setSajuData(null);
     setIsLoading(true);
 
     try {

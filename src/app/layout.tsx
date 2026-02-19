@@ -19,7 +19,7 @@ export default function RootLayout({
           rel="stylesheet"
         />
       </head>
-      <body className="min-h-screen antialiased">{children}</body>
+      <body className="min-h-screen antialiased" style={{ backgroundColor: "#0F172A", color: "#F8FAFC" }}>{children}</body>
     </html>
   );
 }

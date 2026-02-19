@@ -14,6 +14,8 @@ export function useSajuCompatibility() {
   const analyze = useCallback(async (input1: SajuInput, input2: SajuInput, relationshipType: string = "romantic") => {
     setError(null);
     setStreamedText("");
+    setPerson1Data(null);
+    setPerson2Data(null);
     setIsLoading(true);
 
     try {
