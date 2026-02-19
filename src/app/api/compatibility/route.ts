@@ -3,7 +3,7 @@ import { anthropic } from "@ai-sdk/anthropic";
 import { getCompatibilitySystemPrompt, buildCompatibilityUserPrompt } from "@/lib/prompts/compatibility";
 import type { SajuAnalysisData } from "@/lib/types";
 
-export const maxDuration = 60;
+export const maxDuration = 300;
 
 export async function POST(request: Request) {
   const body = await request.json();
