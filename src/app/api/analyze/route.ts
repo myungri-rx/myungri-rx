@@ -19,7 +19,7 @@ export async function POST(request: Request) {
       model: anthropic("claude-sonnet-4-20250514"),
       system: PERSONAL_SYSTEM_PROMPT,
       messages: [{ role: "user", content: userPrompt }],
-      maxOutputTokens: 4096,
+      maxOutputTokens: 12000,
     });
 
     // Consume the textStream into a ReadableStream, catching errors properly

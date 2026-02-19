@@ -20,7 +20,7 @@ export async function POST(request: Request) {
       messages: [
         { role: "user", content: buildCompatibilityUserPrompt(person1, person2, relationshipType) },
       ],
-      maxOutputTokens: 4096,
+      maxOutputTokens: 12000,
     });
 
     const encoder = new TextEncoder();
