@@ -13,6 +13,13 @@ export async function POST(request: Request) {
     relationshipType?: string;
   };
 
+  console.log("[compatibility]", JSON.stringify({
+    person1: { name: person1.input.name, gender: person1.input.gender, birthDate: person1.input.birthDate, birthTime: person1.input.birthTime },
+    person2: { name: person2.input.name, gender: person2.input.gender, birthDate: person2.input.birthDate, birthTime: person2.input.birthTime },
+    relationshipType,
+    timestamp: new Date().toISOString(),
+  }));
+
   try {
     const result = streamText({
       model: anthropic("claude-sonnet-4-20250514"),

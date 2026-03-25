@@ -49,11 +49,11 @@ lunarToSolar(year, month, day, isLeapMonth) → { solar, gapja }
 getSajuMonth(year, month, day) → number
 ```
 
-**Important limitations:** manseryeok-js only provides pillar strings. It does NOT compute: ten gods (십신), hidden stems (지장간), 12 stages (12운성), five elements analysis, daeun (대운), seun (세운), spirits (신살), or day master strength. These must all be built as custom utility functions using the lookup tables in SAJU_REFERENCE.md.
+**Important limitations:** manseryeok-js only provides pillar strings. It does NOT compute: ten gods (십신), hidden stems (지장간), 12 stages (12운성), five elements analysis, daeun (대운), seun (세운), spirits (신살), or day master strength. These must all be built as custom utility functions using the lookup tables in docs/SAJU_REFERENCE.md.
 
 ## Saju Calculation Reference Tables
 
-`SAJU_REFERENCE.md` contains all lookup tables needed to build the saju analysis engine:
+`docs/SAJU_REFERENCE.md` contains all lookup tables needed to build the saju analysis engine:
 
 | Section | Table | Use |
 |---------|-------|-----|
@@ -70,7 +70,7 @@ getSajuMonth(year, month, day) → number
 
 ### Interpretation framework
 
-The project uses the **자평명리 (Jaepyeong Myeongri)** system with 일간 (day master) as the center of all analysis. See SAJU_REFERENCE.md §0.
+The project uses the **자평명리 (Jaepyeong Myeongri)** system with 일간 (day master) as the center of all analysis. See docs/SAJU_REFERENCE.md §0.
 
 The AI prompt design uses the **3 major yongshin (用神) theories**:
 
@@ -80,18 +80,18 @@ The AI prompt design uses the **3 major yongshin (用神) theories**:
 | 격국용신 | 자평진전 | Career, social achievement |
 | 조후용신 | 궁통보감 | Constitution, health, climate balance |
 
-SAJU_REFERENCE.md §8 contains ready-to-use interpretation templates for: 일간 해석, 대운·세운 해석, 궁합 해석, 고민 처방. These should be incorporated into the AI system prompts.
+docs/SAJU_REFERENCE.md §8 contains ready-to-use interpretation templates for: 일간 해석, 대운·세운 해석, 궁합 해석, 고민 처방. These should be incorporated into the AI system prompts.
 
 ## Critical Design Principle: Anti-Barnum Effect
 
-Every AI interpretation must cite specific saju structure as evidence. See PRODUCT_SPEC.md §7-0.
+Every AI interpretation must cite specific saju structure as evidence. See docs/PRODUCT_SPEC.md §7-0.
 
 - **Never:** generic statements that apply to anyone ("you sometimes feel lonely")
 - **Always:** cite the exact stems/branches/relationships ("甲일간이 월지 午火 위에 앉아 식신이 왕성합니다")
 - **Time references:** must specify year/month ("2026년 丙午 세운, 특히 하반기 7~9월")
 - **Advice:** must derive logically from saju structure (yongshin-based color/direction/timing)
 
-Quality checklist (SAJU_REFERENCE.md §8-5): 근거 명시, 바넘 효과 배제, 시기 특정, 교차 검증, 균형, 실천 가능성, 용어 병기, 일간 중심, 궁위 활용, 개인화.
+Quality checklist (docs/SAJU_REFERENCE.md §8-5): 근거 명시, 바넘 효과 배제, 시기 특정, 교차 검증, 균형, 실천 가능성, 용어 병기, 일간 중심, 궁위 활용, 개인화.
 
 ## AI Response Structures
 
@@ -111,11 +111,11 @@ Quality checklist (SAJU_REFERENCE.md §8-5): 근거 명시, 바넘 효과 배제
 5. **관계 처방전** — Personalized advice for each person
 6. **결혼운·시점** — Spouse palace analysis, favorable/unfavorable marriage years
 
-Compatibility scoring formula: PRODUCT_SPEC.md §7-3 (base 50, add/subtract for 합/충/형 etc., normalize to 0–100).
+Compatibility scoring formula: docs/PRODUCT_SPEC.md §7-3 (base 50, add/subtract for 합/충/형 etc., normalize to 0–100).
 
 ## UX Trust Devices
 
-Results must include these visual elements (PRODUCT_SPEC.md §7-4):
+Results must include these visual elements (docs/PRODUCT_SPEC.md §7-4):
 - **근거 태그** next to every interpretation ("근거: 일간甲 + 월지午 = 식신")
 - **사주 원국표** with hanja and ohaeng color coding
 - **오행 차트** (radar or bar chart for 목/화/토/금/수)
@@ -125,9 +125,9 @@ Results must include these visual elements (PRODUCT_SPEC.md §7-4):
 
 ## Spec Documents
 
-- `PRODUCT_SPEC.md` — Active POC spec (scope, data model, AI prompt design with examples, response structures, design guide)
-- `SAJU_REFERENCE.md` — Complete saju theory reference with all lookup tables needed for implementation (5 classics, yongshin theories, 십신/12운성/지장간/신살 tables, 대운 algorithm, interpretation templates, quality checklist)
-- `prd_deprecated.md` — Earlier full-scope spec — **deprecated**
+- `docs/PRODUCT_SPEC.md` — Active POC spec (scope, data model, AI prompt design with examples, response structures, design guide)
+- `docs/SAJU_REFERENCE.md` — Complete saju theory reference with all lookup tables needed for implementation (5 classics, yongshin theories, 십신/12운성/지장간/신살 tables, 대운 algorithm, interpretation templates, quality checklist)
+- `docs/prd_deprecated.md` — Earlier full-scope spec — **deprecated**
 
 ## Design Guide
 

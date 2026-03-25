@@ -12,6 +12,16 @@ export async function POST(request: Request) {
     concern?: string;
   };
 
+  console.log("[analyze]", JSON.stringify({
+    name: sajuData.input.name,
+    gender: sajuData.input.gender,
+    birthDate: sajuData.input.birthDate,
+    birthTime: sajuData.input.birthTime,
+    calendarType: sajuData.input.calendarType,
+    concern: concern || null,
+    timestamp: new Date().toISOString(),
+  }));
+
   const userPrompt = buildPersonalUserPrompt(sajuData, concern);
 
   try {
