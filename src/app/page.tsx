@@ -145,9 +145,14 @@ export default function Home() {
           {activeTab === "personal" && analysis.sajuData && (
             <PersonalResult
               sajuData={analysis.sajuData}
-              streamedText={analysis.streamedText}
+              teaserText={analysis.teaserText}
+              fullText={analysis.fullText}
               isStreaming={analysis.isLoading}
               concern={lastConcern}
+              phase={analysis.phase}
+              canLoadMore={analysis.canLoadMore}
+              isLoadingMore={analysis.phase === "full-streaming"}
+              onLoadMore={analysis.loadMore}
             />
           )}
           {activeTab === "compatibility" &&
@@ -156,9 +161,14 @@ export default function Home() {
               <CompatibilityResult
                 person1={compatibility.person1Data}
                 person2={compatibility.person2Data}
-                streamedText={compatibility.streamedText}
+                teaserText={compatibility.teaserText}
+                fullText={compatibility.fullText}
                 isStreaming={compatibility.isLoading}
                 relationshipType={lastRelType}
+                phase={compatibility.phase}
+                canLoadMore={compatibility.canLoadMore}
+                isLoadingMore={compatibility.phase === "full-streaming"}
+                onLoadMore={compatibility.loadMore}
               />
             )}
         </section>

@@ -8,25 +8,27 @@ import { SectionCard } from "./section-card";
 import { ShareBar } from "./share-bar";
 import { Card } from "@/components/ui/card";
 import { useRevealSequence } from "@/hooks/use-reveal-sequence";
-import type { SajuAnalysisData } from "@/lib/types";
+import type { SajuAnalysisData, AnalysisPhase } from "@/lib/types";
 import { parseCompatibilityScores } from "@/lib/utils/parse-sections";
 
 interface CompatibilityResultProps {
   person1: SajuAnalysisData;
   person2: SajuAnalysisData;
-  streamedText: string;
+  teaserText: string;
+  fullText: string;
   isStreaming: boolean;
   relationshipType?: string;
+  phase: AnalysisPhase;
+  canLoadMore: boolean;
+  isLoadingMore: boolean;
+  onLoadMore: () => void;
 }
 
 export function CompatibilityResult({
-  person1,
-  person2,
-  streamedText,
-  isStreaming,
-  relationshipType,
+  person1, person2, teaserText, fullText, isStreaming, relationshipType,
+  phase, canLoadMore, isLoadingMore, onLoadMore,
 }: CompatibilityResultProps) {
-  const scores = parseCompatibilityScores(streamedText);
+  const scores = parseCompatibilityScores(teaserText + fullText);
 
   const { visibleCount, startReveal } = useRevealSequence({
     totalSections: 4,
@@ -36,6 +38,8 @@ export function CompatibilityResult({
   useEffect(() => {
     startReveal();
   }, [startReveal]);
+
+  const isFullDone = phase === "full-done";
 
   return (
     <div className="space-y-6">
@@ -54,7 +58,6 @@ export function CompatibilityResult({
             />
           </SectionCard>
 
-          {/* VS divider */}
           <div className="hidden md:flex items-center justify-center self-center">
             <span className="font-display text-3xl font-bold text-accent">VS</span>
           </div>
@@ -91,24 +94,54 @@ export function CompatibilityResult({
         </SectionCard>
       )}
 
-      {/* Streamed AI Analysis */}
-      {visibleCount >= 3 && (streamedText || isStreaming) && (
+      {/* Streamed AI Analysis — single card, teaser + full */}
+      {visibleCount >= 3 && (teaserText || isStreaming) && (
         <Card
           variant="elevated"
           className="animate-slide-up"
           style={{ animationDelay: "400ms", animationFillMode: "backwards" }}
         >
-          <StreamingText content={streamedText} />
-          {!isStreaming && streamedText && (
+          <StreamingText
+            content={fullText ? teaserText + "\n\n" + fullText : teaserText}
+            isStreaming={phase === "teaser-streaming" || phase === "full-streaming"}
+          />
+
+          {canLoadMore && !isLoadingMore && (
+            <div className="relative mt-4">
+              <div className="absolute -top-16 left-0 right-0 h-16 bg-gradient-to-t from-[#1E293B] to-transparent pointer-events-none" />
+              <div className="text-center py-6 border-t border-white/[0.08]">
+                <p className="text-sm text-text-secondary mb-3">
+                  갈등 주의보, 시기별 타임라인, 관계 처방전이 궁금하다면?
+                </p>
+                <button
+                  onClick={onLoadMore}
+                  className="relative px-8 py-3 rounded-xl text-base font-medium bg-gradient-to-r from-primary via-primary-light to-primary text-white border border-accent/40 shadow-[0_0_20px_rgba(212,175,55,0.15)] hover:shadow-[0_0_30px_rgba(212,175,55,0.3)] hover:border-accent/70 active:scale-[0.98] transition-all duration-300"
+                >
+                  더보기 — 상세 궁합 분석 보기
+                </button>
+              </div>
+            </div>
+          )}
+
+          {isLoadingMore && (
+            <div className="text-center py-6 border-t border-white/[0.08]">
+              <span className="inline-flex items-center gap-2 text-accent animate-pulse">
+                <span className="h-4 w-4 animate-spin rounded-full border-2 border-accent border-t-transparent" />
+                상세 분석을 생성하고 있어요...
+              </span>
+            </div>
+          )}
+
+          {isFullDone && (teaserText || fullText) && (
             <>
               <div className="mt-6 pt-4 border-t border-white/[0.08] text-xs text-text-secondary/50 text-center">
                 궁합 점수는 절대적 판단이 아닌 관계 개선의 가이드입니다.
               </div>
               <ShareBar
-                resultText={streamedText}
+                resultText={teaserText + "\n\n" + fullText}
                 shareData={{
                   type: "compatibility",
-                  resultText: streamedText,
+                  resultText: teaserText + "\n\n" + fullText,
                   person1,
                   person2,
                   relationshipType,

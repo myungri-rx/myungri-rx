@@ -76,9 +76,14 @@ function ShareContent() {
     return (
       <PersonalResult
         sajuData={data.sajuData}
-        streamedText={data.resultText}
+        teaserText={data.resultText}
+        fullText=""
         isStreaming={false}
         concern={data.concern}
+        phase="full-done"
+        canLoadMore={false}
+        isLoadingMore={false}
+        onLoadMore={() => {}}
       />
     );
   }
@@ -88,9 +93,14 @@ function ShareContent() {
       <CompatibilityResult
         person1={data.person1}
         person2={data.person2}
-        streamedText={data.resultText}
+        teaserText={data.resultText}
+        fullText=""
         isStreaming={false}
         relationshipType={data.relationshipType}
+        phase="full-done"
+        canLoadMore={false}
+        isLoadingMore={false}
+        onLoadMore={() => {}}
       />
     );
   }

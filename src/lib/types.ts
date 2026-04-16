@@ -131,3 +131,6 @@ export interface CompatibilityRequest {
 }
 
 export type OhaengKey = "wood" | "fire" | "earth" | "metal" | "water";
+
+export type AnalysisMode = "teaser" | "full";
+export type AnalysisPhase = "idle" | "teaser-streaming" | "teaser-done" | "full-streaming" | "full-done";

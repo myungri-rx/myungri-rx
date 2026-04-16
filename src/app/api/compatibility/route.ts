@@ -1,33 +1,52 @@
 import { streamText } from "ai";
 import { anthropic } from "@ai-sdk/anthropic";
 import { getCompatibilitySystemPrompt, buildCompatibilityUserPrompt } from "@/lib/prompts/compatibility";
-import type { SajuAnalysisData } from "@/lib/types";
+import type { SajuAnalysisData, AnalysisMode } from "@/lib/types";
 
 export const maxDuration = 300;
 
+const TOKEN_LIMITS = {
+  teaser: { prod: 1000, test: 200 },
+  full: { prod: 8500, test: 200 },
+};
+
 export async function POST(request: Request) {
   const body = await request.json();
-  const { person1, person2, relationshipType = "romantic" } = body as {
+  const { person1, person2, relationshipType = "romantic", mode = "teaser", teaserContent } = body as {
     person1: SajuAnalysisData;
     person2: SajuAnalysisData;
     relationshipType?: string;
+    mode?: AnalysisMode;
+    teaserContent?: string;
   };
 
   console.log("[compatibility]", JSON.stringify({
     person1: { name: person1.input.name, gender: person1.input.gender, birthDate: person1.input.birthDate, birthTime: person1.input.birthTime },
     person2: { name: person2.input.name, gender: person2.input.gender, birthDate: person2.input.birthDate, birthTime: person2.input.birthTime },
     relationshipType,
+    mode,
     timestamp: new Date().toISOString(),
   }));
 
+  const isTest = process.env.TEST_MODE === "true";
+  const maxOutputTokens = TOKEN_LIMITS[mode][isTest ? "test" : "prod"];
+  const userPrompt = buildCompatibilityUserPrompt(person1, person2, relationshipType);
+
+  const messages = mode === "full" && teaserContent
+    ? [
+        { role: "user" as const, content: userPrompt },
+        { role: "assistant" as const, content: teaserContent },
+        { role: "user" as const, content: "이어서 나머지 섹션을 분석해주세요." },
+      ]
+    : [{ role: "user" as const, content: userPrompt }];
+
   try {
+    // FUTURE: if (mode === "full") { verify payment token }
     const result = streamText({
       model: anthropic("claude-sonnet-4-20250514"),
-      system: getCompatibilitySystemPrompt(relationshipType),
-      messages: [
-        { role: "user", content: buildCompatibilityUserPrompt(person1, person2, relationshipType) },
-      ],
-      maxOutputTokens: process.env.TEST_MODE === "true" ? 200 : 12000,
+      system: getCompatibilitySystemPrompt(relationshipType, mode),
+      messages,
+      maxOutputTokens,
     });
 
     const encoder = new TextEncoder();

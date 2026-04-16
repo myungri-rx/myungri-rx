@@ -1,15 +1,22 @@
 import { streamText } from "ai";
 import { anthropic } from "@ai-sdk/anthropic";
-import { PERSONAL_SYSTEM_PROMPT, buildPersonalUserPrompt } from "@/lib/prompts/personal";
-import type { SajuAnalysisData } from "@/lib/types";
+import { PERSONAL_SYSTEM_PROMPT_TEASER, PERSONAL_SYSTEM_PROMPT_FULL, buildPersonalUserPrompt } from "@/lib/prompts/personal";
+import type { SajuAnalysisData, AnalysisMode } from "@/lib/types";
 
 export const maxDuration = 300;
 
+const TOKEN_LIMITS = {
+  teaser: { prod: 1000, test: 200 },
+  full: { prod: 8500, test: 200 },
+};
+
 export async function POST(request: Request) {
   const body = await request.json();
-  const { sajuData, concern } = body as {
+  const { sajuData, concern, mode = "teaser", teaserContent } = body as {
     sajuData: SajuAnalysisData;
     concern?: string;
+    mode?: AnalysisMode;
+    teaserContent?: string;
   };
 
   console.log("[analyze]", JSON.stringify({
@@ -19,20 +26,33 @@ export async function POST(request: Request) {
     birthTime: sajuData.input.birthTime,
     calendarType: sajuData.input.calendarType,
     concern: concern || null,
+    mode,
     timestamp: new Date().toISOString(),
   }));
 
   const userPrompt = buildPersonalUserPrompt(sajuData, concern);
+  const isTest = process.env.TEST_MODE === "true";
+  const maxOutputTokens = TOKEN_LIMITS[mode][isTest ? "test" : "prod"];
+  const systemPrompt = mode === "teaser" ? PERSONAL_SYSTEM_PROMPT_TEASER : PERSONAL_SYSTEM_PROMPT_FULL;
+
+  // Build messages based on mode
+  const messages = mode === "full" && teaserContent
+    ? [
+        { role: "user" as const, content: userPrompt },
+        { role: "assistant" as const, content: teaserContent },
+        { role: "user" as const, content: "이어서 나머지 섹션을 분석해주세요." },
+      ]
+    : [{ role: "user" as const, content: userPrompt }];
 
   try {
+    // FUTURE: if (mode === "full") { verify payment token }
     const result = streamText({
       model: anthropic("claude-sonnet-4-20250514"),
-      system: PERSONAL_SYSTEM_PROMPT,
-      messages: [{ role: "user", content: userPrompt }],
-      maxOutputTokens: process.env.TEST_MODE === "true" ? 200 : 12000,
+      system: systemPrompt,
+      messages,
+      maxOutputTokens,
     });
 
-    // Consume the textStream into a ReadableStream, catching errors properly
     const encoder = new TextEncoder();
     const stream = new ReadableStream({
       async start(controller) {

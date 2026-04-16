@@ -2,12 +2,13 @@
 
 interface StreamingTextProps {
   content: string;
+  isStreaming?: boolean;
 }
 
 /**
  * Renders streamed markdown-like content with dramatic styling.
  */
-export function StreamingText({ content }: StreamingTextProps) {
+export function StreamingText({ content, isStreaming = true }: StreamingTextProps) {
   if (!content) return null;
 
   const lines = content.split("\n");
@@ -72,8 +73,8 @@ export function StreamingText({ content }: StreamingTextProps) {
           </p>
         );
       })}
-      {/* Gold pulsing cursor */}
-      <span className="inline-block w-2 h-2 rounded-full bg-accent animate-pulse-glow ml-1" />
+      {/* Gold pulsing cursor — only during streaming */}
+      {isStreaming && <span className="inline-block w-2 h-2 rounded-full bg-accent animate-pulse-glow ml-1" />}
     </div>
   );
 }
