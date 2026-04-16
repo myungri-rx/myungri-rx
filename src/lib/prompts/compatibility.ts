@@ -166,6 +166,7 @@ function formatPersonData(data: SajuAnalysisData, label: string): string {
 이름: ${data.input.name}
 성별: ${data.input.gender === "male" ? "남" : "여"}
 생년월일: ${data.input.birthDate}
+띠: ${data.zodiacAnimal}띠
 
 사주팔자:
       년주        월주        일주        시주

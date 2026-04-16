@@ -2,14 +2,19 @@ import { Redis } from "@upstash/redis";
 
 export const runtime = "edge";
 
-const redis = new Redis({
-  url: process.env.UPSTASH_REDIS_REST_URL!,
-  token: process.env.UPSTASH_REDIS_REST_TOKEN!,
-});
+function getRedis() {
+  const url = process.env.UPSTASH_REDIS_REST_URL;
+  const token = process.env.UPSTASH_REDIS_REST_TOKEN;
+  if (!url || !token) {
+    throw new Error("Redis 환경변수가 설정되지 않았습니다.");
+  }
+  return new Redis({ url, token });
+}
 
 // Save result — POST { resultText, sajuData?, person1?, person2? }
 export async function POST(request: Request) {
   try {
+    const redis = getRedis();
     const body = await request.json();
     const id = crypto.randomUUID().slice(0, 8);
 
@@ -26,6 +31,7 @@ export async function POST(request: Request) {
 // Load result — GET ?id=xxx
 export async function GET(request: Request) {
   try {
+    const redis = getRedis();
     const { searchParams } = new URL(request.url);
     const id = searchParams.get("id");
     if (!id) {

@@ -106,6 +106,7 @@ export function buildPersonalUserPrompt(data: SajuAnalysisData, concern?: string
 성별: ${data.input.gender === "male" ? "남" : "여"}
 생년월일: ${data.input.birthDate} (${data.input.calendarType === "solar" ? "양력" : "음력"})
 태어난 시간: ${data.input.birthTime}
+띠: ${data.zodiacAnimal}띠
 
 사주팔자:
       년주        월주        일주        시주

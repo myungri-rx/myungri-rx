@@ -98,6 +98,7 @@ export interface SeunInfo {
 
 export interface SajuAnalysisData {
   input: SajuInput;
+  zodiacAnimal: string; // 띠 e.g. "닭"
   fourPillars: FourPillars;
   fourPillarsHanja: FourPillarsHanja;
   fiveElements: FiveElements;

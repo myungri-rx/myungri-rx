@@ -16,6 +16,13 @@ import type { SajuInput, FourPillars, FourPillarsHanja, SajuAnalysisData } from 
 
 const CURRENT_YEAR = 2026;
 
+// 지지 → 띠 매핑 (자→쥐, 축→소, ...)
+const BRANCH_TO_ZODIAC: Record<string, string> = {
+  "자": "쥐", "축": "소", "인": "호랑이", "묘": "토끼",
+  "진": "용", "사": "뱀", "오": "말", "미": "양",
+  "신": "원숭이", "유": "닭", "술": "개", "해": "돼지",
+};
+
 /**
  * Convert lunar date to solar date if needed.
  */
@@ -129,6 +136,7 @@ export function calculateFullSaju(input: SajuInput): SajuAnalysisData {
 
   return {
     input,
+    zodiacAnimal: BRANCH_TO_ZODIAC[correctedYearPillar.branch] || "",
     fourPillars,
     fourPillarsHanja,
     fiveElements,
