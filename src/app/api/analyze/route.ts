@@ -3,6 +3,7 @@ import { anthropic } from "@ai-sdk/anthropic";
 import { PERSONAL_SYSTEM_PROMPT, buildPersonalUserPrompt } from "@/lib/prompts/personal";
 import type { SajuAnalysisData } from "@/lib/types";
 
+export const runtime = "edge";
 export const maxDuration = 300;
 
 export async function POST(request: Request) {
@@ -29,7 +30,7 @@ export async function POST(request: Request) {
       model: anthropic("claude-sonnet-4-20250514"),
       system: PERSONAL_SYSTEM_PROMPT,
       messages: [{ role: "user", content: userPrompt }],
-      maxOutputTokens: 12000,
+      maxOutputTokens: process.env.TEST_MODE === "true" ? 200 : 12000,
     });
 
     // Consume the textStream into a ReadableStream, catching errors properly

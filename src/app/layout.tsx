@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Script from "next/script";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -28,7 +29,13 @@ export default function RootLayout({
           rel="stylesheet"
         />
       </head>
-      <body className="min-h-screen antialiased" style={{ backgroundColor: "#0F172A", color: "#F8FAFC" }}>{children}</body>
+      <body className="min-h-screen antialiased" style={{ backgroundColor: "#0F172A", color: "#F8FAFC" }}>
+        {children}
+        <Script
+          src="https://t1.kakaocdn.net/kakao_js_sdk/2.7.4/kakao.min.js"
+          strategy="afterInteractive"
+        />
+      </body>
     </html>
   );
 }

@@ -19,11 +19,13 @@ const DEFAULT_INPUT: SajuInput = {
 interface AnalysisFormProps {
   onSubmit: (input: SajuInput, concern?: string) => void;
   isLoading: boolean;
+  defaultInput?: SajuInput;
+  defaultConcern?: string;
 }
 
-export function AnalysisForm({ onSubmit, isLoading }: AnalysisFormProps) {
-  const [input, setInput] = useState<SajuInput>(DEFAULT_INPUT);
-  const [concern, setConcern] = useState("");
+export function AnalysisForm({ onSubmit, isLoading, defaultInput, defaultConcern }: AnalysisFormProps) {
+  const [input, setInput] = useState<SajuInput>(defaultInput ?? DEFAULT_INPUT);
+  const [concern, setConcern] = useState(defaultConcern ?? "");
 
   const isValid = input.name.trim() && input.birthDate;
 

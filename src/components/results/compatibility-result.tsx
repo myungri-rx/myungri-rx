@@ -5,6 +5,7 @@ import { PillarTable } from "./pillar-table";
 import { CompatibilityRadar } from "./compatibility-radar";
 import { StreamingText } from "./streaming-text";
 import { SectionCard } from "./section-card";
+import { ShareBar } from "./share-bar";
 import { Card } from "@/components/ui/card";
 import { useRevealSequence } from "@/hooks/use-reveal-sequence";
 import type { SajuAnalysisData } from "@/lib/types";
@@ -15,6 +16,7 @@ interface CompatibilityResultProps {
   person2: SajuAnalysisData;
   streamedText: string;
   isStreaming: boolean;
+  relationshipType?: string;
 }
 
 export function CompatibilityResult({
@@ -22,6 +24,7 @@ export function CompatibilityResult({
   person2,
   streamedText,
   isStreaming,
+  relationshipType,
 }: CompatibilityResultProps) {
   const scores = parseCompatibilityScores(streamedText);
 
@@ -97,9 +100,21 @@ export function CompatibilityResult({
         >
           <StreamingText content={streamedText} />
           {!isStreaming && streamedText && (
-            <div className="mt-6 pt-4 border-t border-white/[0.08] text-xs text-text-secondary/50 text-center">
-              궁합 점수는 절대적 판단이 아닌 관계 개선의 가이드입니다.
-            </div>
+            <>
+              <div className="mt-6 pt-4 border-t border-white/[0.08] text-xs text-text-secondary/50 text-center">
+                궁합 점수는 절대적 판단이 아닌 관계 개선의 가이드입니다.
+              </div>
+              <ShareBar
+                resultText={streamedText}
+                shareData={{
+                  type: "compatibility",
+                  resultText: streamedText,
+                  person1,
+                  person2,
+                  relationshipType,
+                }}
+              />
+            </>
           )}
         </Card>
       )}

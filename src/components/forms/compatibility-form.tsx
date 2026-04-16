@@ -26,11 +26,13 @@ const DEFAULT_INPUT: SajuInput = {
 interface CompatibilityFormProps {
   onSubmit: (person1: SajuInput, person2: SajuInput, relationshipType: RelationshipType) => void;
   isLoading: boolean;
+  defaultPerson1?: SajuInput;
+  defaultPerson2?: SajuInput;
 }
 
-export function CompatibilityForm({ onSubmit, isLoading }: CompatibilityFormProps) {
-  const [person1, setPerson1] = useState<SajuInput>(DEFAULT_INPUT);
-  const [person2, setPerson2] = useState<SajuInput>({ ...DEFAULT_INPUT, gender: "female" });
+export function CompatibilityForm({ onSubmit, isLoading, defaultPerson1, defaultPerson2 }: CompatibilityFormProps) {
+  const [person1, setPerson1] = useState<SajuInput>(defaultPerson1 ?? DEFAULT_INPUT);
+  const [person2, setPerson2] = useState<SajuInput>(defaultPerson2 ?? { ...DEFAULT_INPUT, gender: "female" });
   const [relationshipType, setRelationshipType] = useState<RelationshipType>("romantic");
 
   const isValid =

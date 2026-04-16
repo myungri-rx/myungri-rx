@@ -7,6 +7,7 @@ import { DaeunTimeline } from "./daeun-timeline";
 import { WarningBadge } from "./warning-badge";
 import { StreamingText } from "./streaming-text";
 import { SectionCard } from "./section-card";
+import { ShareBar } from "./share-bar";
 import { Card } from "@/components/ui/card";
 import { useRevealSequence } from "@/hooks/use-reveal-sequence";
 import type { SajuAnalysisData } from "@/lib/types";
@@ -15,9 +16,10 @@ interface PersonalResultProps {
   sajuData: SajuAnalysisData;
   streamedText: string;
   isStreaming: boolean;
+  concern?: string;
 }
 
-export function PersonalResult({ sajuData, streamedText, isStreaming }: PersonalResultProps) {
+export function PersonalResult({ sajuData, streamedText, isStreaming, concern }: PersonalResultProps) {
   const { visibleCount, startReveal } = useRevealSequence({
     totalSections: 4,
     intervalMs: 500,
@@ -118,9 +120,20 @@ export function PersonalResult({ sajuData, streamedText, isStreaming }: Personal
         <Card variant="elevated" className="animate-slide-up" style={{ animationFillMode: "backwards" }}>
           <StreamingText content={streamedText} />
           {!isStreaming && streamedText && (
-            <div className="mt-6 pt-4 border-t border-white/[0.08] text-xs text-text-secondary/50 text-center">
-              사주는 참고 도구이며, 운명은 노력과 선택에 의해 바뀔 수 있습니다.
-            </div>
+            <>
+              <div className="mt-6 pt-4 border-t border-white/[0.08] text-xs text-text-secondary/50 text-center">
+                사주는 참고 도구이며, 운명은 노력과 선택에 의해 바뀔 수 있습니다.
+              </div>
+              <ShareBar
+                resultText={streamedText}
+                shareData={{
+                  type: "personal",
+                  resultText: streamedText,
+                  sajuData,
+                  concern,
+                }}
+              />
+            </>
           )}
         </Card>
       )}

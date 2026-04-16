@@ -3,6 +3,7 @@ import { anthropic } from "@ai-sdk/anthropic";
 import { getCompatibilitySystemPrompt, buildCompatibilityUserPrompt } from "@/lib/prompts/compatibility";
 import type { SajuAnalysisData } from "@/lib/types";
 
+export const runtime = "edge";
 export const maxDuration = 300;
 
 export async function POST(request: Request) {
@@ -27,7 +28,7 @@ export async function POST(request: Request) {
       messages: [
         { role: "user", content: buildCompatibilityUserPrompt(person1, person2, relationshipType) },
       ],
-      maxOutputTokens: 12000,
+      maxOutputTokens: process.env.TEST_MODE === "true" ? 200 : 12000,
     });
 
     const encoder = new TextEncoder();

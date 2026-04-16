@@ -13,6 +13,7 @@ import { PersonalResult } from "@/components/results/personal-result";
 import { CompatibilityResult } from "@/components/results/compatibility-result";
 import { useSajuAnalysis } from "@/hooks/use-saju-analysis";
 import { useSajuCompatibility } from "@/hooks/use-saju-compatibility";
+import { parseShareUrl } from "@/lib/share-url";
 
 const TABS = [
   { id: "personal", label: "내 사주 보기" },
@@ -22,12 +23,29 @@ const TABS = [
 export default function Home() {
   const [activeTab, setActiveTab] = useState("personal");
   const [showHero, setShowHero] = useState(true);
+  const [lastConcern, setLastConcern] = useState<string | undefined>();
+  const [lastRelType, setLastRelType] = useState<string | undefined>();
   const formRef = useRef<HTMLDivElement>(null);
   const resultRef = useRef<HTMLDivElement>(null);
   const prevHasResultsRef = useRef(false);
 
   const analysis = useSajuAnalysis();
   const compatibility = useSajuCompatibility();
+
+  // Handle shared URL on mount — prefill form only, no auto-analyze
+  const [sharedInput, setSharedInput] = useState<ReturnType<typeof parseShareUrl>>(null);
+  useEffect(() => {
+    const params = parseShareUrl(window.location.href);
+    if (!params) return;
+    window.history.replaceState({}, "", "/");
+    setShowHero(false);
+    setSharedInput(params);
+    if (params.type === "personal") {
+      setActiveTab("personal");
+    } else {
+      setActiveTab("compatibility");
+    }
+  }, []);
 
   const isCurrentlyLoading = analysis.isLoading || compatibility.isLoading;
   const hasResults =
@@ -83,13 +101,23 @@ export default function Home() {
           <div className="mt-8">
             {activeTab === "personal" ? (
               <AnalysisForm
-                onSubmit={analysis.analyze}
+                onSubmit={(input, concern) => {
+                  setLastConcern(concern);
+                  analysis.analyze(input, concern);
+                }}
                 isLoading={analysis.isLoading}
+                defaultInput={sharedInput?.type === "personal" ? sharedInput.input : undefined}
+                defaultConcern={sharedInput?.type === "personal" ? sharedInput.concern : undefined}
               />
             ) : (
               <CompatibilityForm
-                onSubmit={(p1, p2, relType: RelationshipType) => compatibility.analyze(p1, p2, relType)}
+                onSubmit={(p1, p2, relType: RelationshipType) => {
+                  setLastRelType(relType);
+                  compatibility.analyze(p1, p2, relType);
+                }}
                 isLoading={compatibility.isLoading}
+                defaultPerson1={sharedInput?.type === "compatibility" ? sharedInput.person1 : undefined}
+                defaultPerson2={sharedInput?.type === "compatibility" ? sharedInput.person2 : undefined}
               />
             )}
 
@@ -119,6 +147,7 @@ export default function Home() {
               sajuData={analysis.sajuData}
               streamedText={analysis.streamedText}
               isStreaming={analysis.isLoading}
+              concern={lastConcern}
             />
           )}
           {activeTab === "compatibility" &&
@@ -129,6 +158,7 @@ export default function Home() {
                 person2={compatibility.person2Data}
                 streamedText={compatibility.streamedText}
                 isStreaming={compatibility.isLoading}
+                relationshipType={lastRelType}
               />
             )}
         </section>
