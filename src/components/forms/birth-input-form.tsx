@@ -5,24 +5,22 @@ import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import type { SajuInput } from "@/lib/types";
 
-// Generate hour options for birth time
+// 12시진 (2시간 단위) options for birth time
 const HOUR_OPTIONS = [
   { value: "모름", label: "모름" },
-  ...Array.from({ length: 24 }, (_, h) => ({
-    value: `${String(h).padStart(2, "0")}:00`,
-    label: `${String(h).padStart(2, "0")}:00 (${getTimeName(h)})`,
-  })),
+  { value: "23:30", label: "자시 (23:00~01:00)" },
+  { value: "02:00", label: "축시 (01:00~03:00)" },
+  { value: "04:00", label: "인시 (03:00~05:00)" },
+  { value: "06:00", label: "묘시 (05:00~07:00)" },
+  { value: "08:00", label: "진시 (07:00~09:00)" },
+  { value: "10:00", label: "사시 (09:00~11:00)" },
+  { value: "12:00", label: "오시 (11:00~13:00)" },
+  { value: "14:00", label: "미시 (13:00~15:00)" },
+  { value: "16:00", label: "신시 (15:00~17:00)" },
+  { value: "18:00", label: "유시 (17:00~19:00)" },
+  { value: "20:00", label: "술시 (19:00~21:00)" },
+  { value: "22:00", label: "해시 (21:00~23:00)" },
 ];
-
-function getTimeName(hour: number): string {
-  const names = [
-    "자시", "자시", "축시", "축시", "인시", "인시",
-    "묘시", "묘시", "진시", "진시", "사시", "사시",
-    "오시", "오시", "미시", "미시", "신시", "신시",
-    "유시", "유시", "술시", "술시", "해시", "해시",
-  ];
-  return names[hour] || "";
-}
 
 // Year options: 1920–2026
 const YEAR_OPTIONS = Array.from({ length: 2026 - 1920 + 1 }, (_, i) => {
