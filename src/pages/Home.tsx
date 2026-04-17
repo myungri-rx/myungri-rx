@@ -1,5 +1,3 @@
-"use client";
-
 import { useState, useRef, useEffect } from "react";
 import { StarField } from "@/components/effects/star-field";
 import { HeroSection } from "@/components/layout/hero-section";
@@ -32,7 +30,6 @@ export default function Home() {
   const analysis = useSajuAnalysis();
   const compatibility = useSajuCompatibility();
 
-  // Handle shared URL on mount — prefill form only, no auto-analyze
   const [sharedInput, setSharedInput] = useState<ReturnType<typeof parseShareUrl>>(null);
   useEffect(() => {
     const params = parseShareUrl(window.location.href);
@@ -52,7 +49,6 @@ export default function Home() {
     !!analysis.sajuData ||
     (!!compatibility.person1Data && !!compatibility.person2Data);
 
-  // Scroll to results when data becomes available
   useEffect(() => {
     if (hasResults && !prevHasResultsRef.current) {
       setTimeout(() => {
@@ -78,103 +74,60 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-background relative overflow-hidden">
-      {/* Star field background */}
       <StarField />
-
-      {/* Sticky header (visible after hero) */}
       <Header compact={!showHero} />
-
-      {/* Hero section */}
       {showHero && <HeroSection onStart={handleStart} />}
-
-      {/* Loading overlay */}
       <AnalysisLoading isVisible={isCurrentlyLoading && !hasResults} />
 
-      {/* Form section */}
       {!showHero && (
-        <section
-          ref={formRef}
-          className="relative z-10 mx-auto max-w-4xl px-4 sm:px-6 lg:px-8 py-12"
-        >
+        <section ref={formRef} className="relative z-10 mx-auto max-w-4xl px-4 sm:px-6 lg:px-8 py-12">
           <Tabs tabs={TABS} activeTab={activeTab} onTabChange={handleTabChange} />
-
           <div className="mt-8">
             {activeTab === "personal" ? (
               <AnalysisForm
-                onSubmit={(input, concern) => {
-                  setLastConcern(concern);
-                  analysis.analyze(input, concern);
-                }}
+                onSubmit={(input, concern) => { setLastConcern(concern); analysis.analyze(input, concern); }}
                 isLoading={analysis.isLoading}
                 defaultInput={sharedInput?.type === "personal" ? sharedInput.input : undefined}
                 defaultConcern={sharedInput?.type === "personal" ? sharedInput.concern : undefined}
               />
             ) : (
               <CompatibilityForm
-                onSubmit={(p1, p2, relType: RelationshipType) => {
-                  setLastRelType(relType);
-                  compatibility.analyze(p1, p2, relType);
-                }}
+                onSubmit={(p1, p2, relType: RelationshipType) => { setLastRelType(relType); compatibility.analyze(p1, p2, relType); }}
                 isLoading={compatibility.isLoading}
                 defaultPerson1={sharedInput?.type === "compatibility" ? sharedInput.person1 : undefined}
                 defaultPerson2={sharedInput?.type === "compatibility" ? sharedInput.person2 : undefined}
               />
             )}
-
-            {/* Error messages */}
             {analysis.error && (
-              <div className="mt-4 glass-card !bg-red-500/10 !border-red-500/20 p-4 text-sm text-red-400">
-                {analysis.error}
-              </div>
+              <div className="mt-4 glass-card !bg-red-500/10 !border-red-500/20 p-4 text-sm text-red-400">{analysis.error}</div>
             )}
             {compatibility.error && (
-              <div className="mt-4 glass-card !bg-red-500/10 !border-red-500/20 p-4 text-sm text-red-400">
-                {compatibility.error}
-              </div>
+              <div className="mt-4 glass-card !bg-red-500/10 !border-red-500/20 p-4 text-sm text-red-400">{compatibility.error}</div>
             )}
           </div>
         </section>
       )}
 
-      {/* Results section */}
       {hasResults && (
-        <section
-          ref={resultRef}
-          className="relative z-10 mx-auto max-w-5xl px-4 sm:px-6 lg:px-8 py-12"
-        >
+        <section ref={resultRef} className="relative z-10 mx-auto max-w-5xl px-4 sm:px-6 lg:px-8 py-12">
           {activeTab === "personal" && analysis.sajuData && (
             <PersonalResult
-              sajuData={analysis.sajuData}
-              teaserText={analysis.teaserText}
-              fullText={analysis.fullText}
-              isStreaming={analysis.isLoading}
-              concern={lastConcern}
-              phase={analysis.phase}
-              canLoadMore={analysis.canLoadMore}
-              isLoadingMore={analysis.phase === "full-streaming"}
-              onLoadMore={analysis.loadMore}
+              sajuData={analysis.sajuData} teaserText={analysis.teaserText} fullText={analysis.fullText}
+              isStreaming={analysis.isLoading} concern={lastConcern} phase={analysis.phase}
+              canLoadMore={analysis.canLoadMore} isLoadingMore={analysis.phase === "full-streaming"} onLoadMore={analysis.loadMore}
             />
           )}
-          {activeTab === "compatibility" &&
-            compatibility.person1Data &&
-            compatibility.person2Data && (
-              <CompatibilityResult
-                person1={compatibility.person1Data}
-                person2={compatibility.person2Data}
-                teaserText={compatibility.teaserText}
-                fullText={compatibility.fullText}
-                isStreaming={compatibility.isLoading}
-                relationshipType={lastRelType}
-                phase={compatibility.phase}
-                canLoadMore={compatibility.canLoadMore}
-                isLoadingMore={compatibility.phase === "full-streaming"}
-                onLoadMore={compatibility.loadMore}
-              />
-            )}
+          {activeTab === "compatibility" && compatibility.person1Data && compatibility.person2Data && (
+            <CompatibilityResult
+              person1={compatibility.person1Data} person2={compatibility.person2Data}
+              teaserText={compatibility.teaserText} fullText={compatibility.fullText}
+              isStreaming={compatibility.isLoading} relationshipType={lastRelType} phase={compatibility.phase}
+              canLoadMore={compatibility.canLoadMore} isLoadingMore={compatibility.phase === "full-streaming"} onLoadMore={compatibility.loadMore}
+            />
+          )}
         </section>
       )}
 
-      {/* Footer */}
       {!showHero && <Footer />}
     </div>
   );

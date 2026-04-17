@@ -1,36 +1,43 @@
 import { streamText } from "ai";
 import { anthropic } from "@ai-sdk/anthropic";
-import { getCompatibilitySystemPrompt, buildCompatibilityUserPrompt } from "@/lib/prompts/compatibility";
-import type { SajuAnalysisData, AnalysisMode } from "@/lib/types";
+import { PERSONAL_SYSTEM_PROMPT_TEASER, PERSONAL_SYSTEM_PROMPT_FULL, buildPersonalUserPrompt } from "../src/lib/prompts/personal";
+import type { SajuAnalysisData, AnalysisMode } from "../src/lib/types";
 
-export const maxDuration = 300;
+export const config = { maxDuration: 300 };
 
 const TOKEN_LIMITS = {
   teaser: { prod: 1000, test: 200 },
   full: { prod: 8500, test: 200 },
 };
 
-export async function POST(request: Request) {
+export default async function handler(request: Request) {
+  if (request.method !== "POST") {
+    return new Response("Method not allowed", { status: 405 });
+  }
+
   const body = await request.json();
-  const { person1, person2, relationshipType = "romantic", mode = "teaser", teaserContent } = body as {
-    person1: SajuAnalysisData;
-    person2: SajuAnalysisData;
-    relationshipType?: string;
+  const { sajuData, concern, mode = "teaser", teaserContent } = body as {
+    sajuData: SajuAnalysisData;
+    concern?: string;
     mode?: AnalysisMode;
     teaserContent?: string;
   };
 
-  console.log("[compatibility]", JSON.stringify({
-    person1: { name: person1.input.name, gender: person1.input.gender, birthDate: person1.input.birthDate, birthTime: person1.input.birthTime },
-    person2: { name: person2.input.name, gender: person2.input.gender, birthDate: person2.input.birthDate, birthTime: person2.input.birthTime },
-    relationshipType,
+  console.log("[analyze]", JSON.stringify({
+    name: sajuData.input.name,
+    gender: sajuData.input.gender,
+    birthDate: sajuData.input.birthDate,
+    birthTime: sajuData.input.birthTime,
+    calendarType: sajuData.input.calendarType,
+    concern: concern || null,
     mode,
     timestamp: new Date().toISOString(),
   }));
 
+  const userPrompt = buildPersonalUserPrompt(sajuData, concern);
   const isTest = process.env.TEST_MODE === "true";
   const maxOutputTokens = TOKEN_LIMITS[mode][isTest ? "test" : "prod"];
-  const userPrompt = buildCompatibilityUserPrompt(person1, person2, relationshipType);
+  const systemPrompt = mode === "teaser" ? PERSONAL_SYSTEM_PROMPT_TEASER : PERSONAL_SYSTEM_PROMPT_FULL;
 
   const messages = mode === "full" && teaserContent
     ? [
@@ -41,10 +48,9 @@ export async function POST(request: Request) {
     : [{ role: "user" as const, content: userPrompt }];
 
   try {
-    // FUTURE: if (mode === "full") { verify payment token }
     const result = streamText({
       model: anthropic("claude-sonnet-4-20250514"),
-      system: getCompatibilitySystemPrompt(relationshipType, mode),
+      system: systemPrompt,
       messages,
       maxOutputTokens,
     });
@@ -70,7 +76,7 @@ export async function POST(request: Request) {
       headers: { "Content-Type": "text/plain; charset=utf-8" },
     });
   } catch (error) {
-    console.error("Compatibility API error:", error);
+    console.error("Analyze API error:", error);
     const message = error instanceof Error ? error.message : "AI 분석 중 오류 발생";
     return new Response(JSON.stringify({ error: message }), {
       status: 500,

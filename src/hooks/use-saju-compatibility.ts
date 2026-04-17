@@ -1,4 +1,3 @@
-"use client";
 
 import { useState, useCallback, useMemo } from "react";
 import { calculateFullSaju } from "@/lib/saju/calculator";
@@ -13,15 +12,23 @@ async function streamResponse(
 
   const decoder = new TextDecoder();
   let accumulated = "";
+  let lastUpdate = 0;
+  const THROTTLE_MS = 50;
 
   while (true) {
     const { done, value } = await reader.read();
     if (done) break;
     const chunk = decoder.decode(value, { stream: true });
     accumulated += chunk;
-    onChunk(accumulated);
+
+    const now = Date.now();
+    if (now - lastUpdate >= THROTTLE_MS) {
+      onChunk(accumulated);
+      lastUpdate = now;
+    }
   }
 
+  onChunk(accumulated);
   return accumulated;
 }
 

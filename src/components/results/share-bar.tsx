@@ -1,4 +1,3 @@
-"use client";
 
 import { useState, useEffect, useRef, useCallback } from "react";
 
@@ -30,7 +29,7 @@ export function ShareBar({ resultText, shareData }: ShareBarProps) {
   const kakaoInitialized = useRef(false);
 
   useEffect(() => {
-    const kakaoKey = process.env.NEXT_PUBLIC_KAKAO_JS_KEY;
+    const kakaoKey = import.meta.env.VITE_KAKAO_JS_KEY as string | undefined;
     if (!kakaoKey) return;
 
     const tryInit = () => {

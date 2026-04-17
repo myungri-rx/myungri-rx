@@ -1,4 +1,3 @@
-"use client";
 
 import { DecorativeMoon } from "@/components/effects/decorative-moon";
 import { Button } from "@/components/ui/button";
