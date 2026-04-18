@@ -1,7 +1,7 @@
 import { streamText } from "ai";
 import { anthropic } from "@ai-sdk/anthropic";
-import { PERSONAL_SYSTEM_PROMPT_TEASER, PERSONAL_SYSTEM_PROMPT_FULL, buildPersonalUserPrompt } from "../src/lib/prompts/personal";
-import type { SajuAnalysisData, AnalysisMode } from "../src/lib/types";
+import { PERSONAL_SYSTEM_PROMPT_TEASER, PERSONAL_SYSTEM_PROMPT_FULL, buildPersonalUserPrompt } from "../src/lib/prompts/personal.js";
+import type { SajuAnalysisData, AnalysisMode } from "../src/lib/types.js";
 
 export const config = { maxDuration: 300 };
 

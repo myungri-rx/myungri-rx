@@ -1,7 +1,7 @@
 import { streamText } from "ai";
 import { anthropic } from "@ai-sdk/anthropic";
-import { getCompatibilitySystemPrompt, buildCompatibilityUserPrompt } from "../src/lib/prompts/compatibility";
-import type { SajuAnalysisData, AnalysisMode } from "../src/lib/types";
+import { getCompatibilitySystemPrompt, buildCompatibilityUserPrompt } from "../src/lib/prompts/compatibility.js";
+import type { SajuAnalysisData, AnalysisMode } from "../src/lib/types.js";
 
 export const config = { maxDuration: 300 };
 
