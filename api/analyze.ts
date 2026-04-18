@@ -1,7 +1,8 @@
+import type { IncomingMessage, ServerResponse } from "node:http";
 import { streamText } from "ai";
 import { anthropic } from "@ai-sdk/anthropic";
-import { PERSONAL_SYSTEM_PROMPT_TEASER, PERSONAL_SYSTEM_PROMPT_FULL, buildPersonalUserPrompt } from "../src/lib/prompts/personal";
-import type { SajuAnalysisData, AnalysisMode } from "../src/lib/types";
+import { PERSONAL_SYSTEM_PROMPT_TEASER, PERSONAL_SYSTEM_PROMPT_FULL, buildPersonalUserPrompt } from "../src/lib/prompts/personal.js";
+import type { SajuAnalysisData, AnalysisMode } from "../src/lib/types.js";
 
 export const config = { maxDuration: 300 };
 
@@ -10,18 +11,41 @@ const TOKEN_LIMITS = {
   full: { prod: 8500, test: 200 },
 };
 
-export default async function handler(request: Request) {
-  if (request.method !== "POST") {
-    return new Response("Method not allowed", { status: 405 });
+interface AnalyzeBody {
+  sajuData: SajuAnalysisData;
+  concern?: string;
+  mode?: AnalysisMode;
+  teaserContent?: string;
+}
+
+async function readJsonBody<T>(req: IncomingMessage): Promise<T> {
+  const preParsed = (req as IncomingMessage & { body?: unknown }).body;
+  if (preParsed && typeof preParsed === "object") return preParsed as T;
+  let raw = "";
+  for await (const chunk of req) {
+    raw += typeof chunk === "string" ? chunk : chunk.toString("utf8");
+  }
+  return (raw ? JSON.parse(raw) : {}) as T;
+}
+
+export default async function handler(req: IncomingMessage, res: ServerResponse): Promise<void> {
+  if (req.method !== "POST") {
+    res.statusCode = 405;
+    res.end("Method not allowed");
+    return;
   }
 
-  const body = await request.json();
-  const { sajuData, concern, mode = "teaser", teaserContent } = body as {
-    sajuData: SajuAnalysisData;
-    concern?: string;
-    mode?: AnalysisMode;
-    teaserContent?: string;
-  };
+  let body: AnalyzeBody;
+  try {
+    body = await readJsonBody<AnalyzeBody>(req);
+  } catch {
+    res.statusCode = 400;
+    res.setHeader("Content-Type", "application/json");
+    res.end(JSON.stringify({ error: "잘못된 요청 바디" }));
+    return;
+  }
+
+  const { sajuData, concern, mode = "teaser", teaserContent } = body;
 
   console.log("[analyze]", JSON.stringify({
     name: sajuData.input.name,
@@ -55,32 +79,22 @@ export default async function handler(request: Request) {
       maxOutputTokens,
     });
 
-    const encoder = new TextEncoder();
-    const stream = new ReadableStream({
-      async start(controller) {
-        try {
-          for await (const chunk of result.textStream) {
-            controller.enqueue(encoder.encode(chunk));
-          }
-          controller.close();
-        } catch (err) {
-          const msg = err instanceof Error ? err.message : "AI 분석 중 오류 발생";
-          console.error("Stream error:", msg);
-          controller.enqueue(encoder.encode(`\n\n[오류] ${msg}`));
-          controller.close();
-        }
-      },
-    });
+    res.writeHead(200, { "Content-Type": "text/plain; charset=utf-8" });
 
-    return new Response(stream, {
-      headers: { "Content-Type": "text/plain; charset=utf-8" },
-    });
+    for await (const chunk of result.textStream) {
+      res.write(chunk);
+    }
+    res.end();
   } catch (error) {
-    console.error("Analyze API error:", error);
     const message = error instanceof Error ? error.message : "AI 분석 중 오류 발생";
-    return new Response(JSON.stringify({ error: message }), {
-      status: 500,
-      headers: { "Content-Type": "application/json" },
-    });
+    console.error("Analyze API error:", message);
+    if (!res.headersSent) {
+      res.statusCode = 500;
+      res.setHeader("Content-Type", "application/json");
+      res.end(JSON.stringify({ error: message }));
+    } else {
+      res.write(`\n\n[오류] ${message}`);
+      res.end();
+    }
   }
 }
