@@ -24,7 +24,6 @@ export function buildAuthorizeUrl(state: string): string {
     client_id: cfg.clientId,
     redirect_uri: cfg.redirectUri,
     state,
-    scope: "profile_nickname,profile_image",
   });
   return `${KAKAO_AUTHORIZE_URL}?${params.toString()}`;
 }
@@ -62,26 +61,6 @@ export async function exchangeCodeForToken(code: string): Promise<KakaoTokenResp
 
 export interface KakaoUser {
   id: string;
-  nickname: string;
-  profileImage?: string;
-  email?: string;
-}
-
-interface KakaoUserRaw {
-  id: number;
-  kakao_account?: {
-    email?: string;
-    profile?: {
-      nickname?: string;
-      profile_image_url?: string;
-      thumbnail_image_url?: string;
-    };
-  };
-  properties?: {
-    nickname?: string;
-    profile_image?: string;
-    thumbnail_image?: string;
-  };
 }
 
 export async function fetchKakaoUser(accessToken: string): Promise<KakaoUser> {
@@ -92,17 +71,6 @@ export async function fetchKakaoUser(accessToken: string): Promise<KakaoUser> {
     const text = await res.text();
     throw new Error(`Kakao 사용자 조회 실패: ${res.status} ${text}`);
   }
-  const data = (await res.json()) as KakaoUserRaw;
-  const nickname =
-    data.kakao_account?.profile?.nickname ?? data.properties?.nickname ?? "카카오 사용자";
-  const profileImage =
-    data.kakao_account?.profile?.profile_image_url ??
-    data.properties?.profile_image ??
-    data.kakao_account?.profile?.thumbnail_image_url;
-  return {
-    id: String(data.id),
-    nickname,
-    profileImage,
-    email: data.kakao_account?.email,
-  };
+  const data = (await res.json()) as { id: number };
+  return { id: String(data.id) };
 }

@@ -5,7 +5,10 @@ import { AnalysisLoading } from "@/components/effects/analysis-loading";
 import { Header } from "@/components/layout/header";
 import { Footer } from "@/components/layout/footer";
 import { AuthMenu } from "@/components/auth/auth-menu";
+import { HistoryModal, type HistoryRecord } from "@/components/history/history-modal";
+import { ScrollToTop } from "@/components/ui/scroll-to-top";
 import { Tabs } from "@/components/ui/tabs";
+import { useAuth } from "@/contexts/AuthContext";
 import { AnalysisForm } from "@/components/forms/analysis-form";
 import { CompatibilityForm, type RelationshipType } from "@/components/forms/compatibility-form";
 import { PersonalResult } from "@/components/results/personal-result";
@@ -30,6 +33,47 @@ export default function Home() {
 
   const analysis = useSajuAnalysis();
   const compatibility = useSajuCompatibility();
+  const [historyOpen, setHistoryOpen] = useState(false);
+  const { user } = useAuth();
+  const prevUserRef = useRef(user);
+
+  const handleGoHome = () => {
+    analysis.reset();
+    compatibility.reset();
+    setShowHero(true);
+    setLastConcern(undefined);
+    setLastRelType(undefined);
+    setHistoryOpen(false);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
+  useEffect(() => {
+    if (prevUserRef.current && !user) {
+      handleGoHome();
+    }
+    prevUserRef.current = user;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user]);
+
+  const handleRestore = (record: HistoryRecord) => {
+    setShowHero(false);
+    if (record.type === "personal") {
+      setActiveTab("personal");
+      compatibility.reset();
+      const data = record.data as Parameters<typeof analysis.restore>[0];
+      analysis.restore(data, record.id);
+      setLastConcern(data.concern);
+    } else {
+      setActiveTab("compatibility");
+      analysis.reset();
+      const data = record.data as Parameters<typeof compatibility.restore>[0];
+      compatibility.restore(data, record.id);
+      setLastRelType(data.relationshipType);
+    }
+    setTimeout(() => {
+      resultRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }, 100);
+  };
 
   const [sharedInput, setSharedInput] = useState<ReturnType<typeof parseShareUrl>>(null);
   useEffect(() => {
@@ -76,8 +120,13 @@ export default function Home() {
   return (
     <div className="min-h-screen bg-background relative overflow-hidden">
       <StarField />
-      <AuthMenu />
-      <Header compact={!showHero} />
+      <AuthMenu onOpenHistory={() => setHistoryOpen(true)} />
+      <HistoryModal
+        open={historyOpen}
+        onClose={() => setHistoryOpen(false)}
+        onSelect={handleRestore}
+      />
+      <Header compact={!showHero} onHome={handleGoHome} />
       {showHero && <HeroSection onStart={handleStart} />}
       <AnalysisLoading isVisible={isCurrentlyLoading && !hasResults} />
 
@@ -131,6 +180,7 @@ export default function Home() {
       )}
 
       {!showHero && <Footer />}
+      <ScrollToTop />
     </div>
   );
 }

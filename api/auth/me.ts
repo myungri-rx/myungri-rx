@@ -11,9 +11,6 @@ export default async function handler(request: Request): Promise<Response> {
       user: {
         id: user.id,
         provider: user.provider,
-        nickname: user.nickname,
-        profileImage: user.profileImage,
-        email: user.email,
       },
     });
   } catch (error) {

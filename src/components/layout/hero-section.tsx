@@ -88,7 +88,7 @@ export function HeroSection({ onStart }: HeroSectionProps) {
 
       {/* Title */}
       <h1 className="font-display text-6xl md:text-7xl font-black text-gradient-gold tracking-tight mb-4 relative z-10">
-        Saju49
+        사주전쟁49
       </h1>
 
       {/* Subtitle */}

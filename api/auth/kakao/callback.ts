@@ -39,9 +39,6 @@ export default async function handler(request: Request): Promise<Response> {
     const user = await upsertUser({
       provider: "kakao",
       providerId: kakaoUser.id,
-      nickname: kakaoUser.nickname,
-      profileImage: kakaoUser.profileImage,
-      email: kakaoUser.email,
     });
 
     const sessionId = await createSession(user);

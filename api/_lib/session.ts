@@ -4,9 +4,6 @@ export interface SessionUser {
   id: string;
   provider: "kakao" | "naver";
   providerId: string;
-  nickname: string;
-  profileImage?: string;
-  email?: string;
   createdAt: number;
 }
 
@@ -124,9 +121,6 @@ export async function destroySession(request: Request): Promise<void> {
 export async function upsertUser(params: {
   provider: SessionUser["provider"];
   providerId: string;
-  nickname: string;
-  profileImage?: string;
-  email?: string;
 }): Promise<SessionUser> {
   const redis = getRedis();
   const key = `user:provider:${params.provider}:${params.providerId}`;
@@ -136,14 +130,7 @@ export async function upsertUser(params: {
     const raw = await redis.get<string>(`user:${existingId}`);
     if (raw) {
       const existing: SessionUser = typeof raw === "string" ? JSON.parse(raw) : (raw as SessionUser);
-      const merged: SessionUser = {
-        ...existing,
-        nickname: params.nickname,
-        profileImage: params.profileImage,
-        email: params.email ?? existing.email,
-      };
-      await redis.set(`user:${existingId}`, JSON.stringify(merged));
-      return merged;
+      return existing;
     }
   }
 
@@ -152,9 +139,6 @@ export async function upsertUser(params: {
     id,
     provider: params.provider,
     providerId: params.providerId,
-    nickname: params.nickname,
-    profileImage: params.profileImage,
-    email: params.email,
     createdAt: Date.now(),
   };
   await redis.set(`user:${id}`, JSON.stringify(user));

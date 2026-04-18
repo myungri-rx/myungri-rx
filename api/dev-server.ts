@@ -101,6 +101,7 @@ const ROUTES: Record<string, string> = {
   "/auth/kakao/callback": "auth/kakao/callback",
   "/auth/me": "auth/me",
   "/auth/logout": "auth/logout",
+  "/history": "history",
 };
 
 const server = createServer(async (req, res) => {

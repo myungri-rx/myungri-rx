@@ -3,9 +3,6 @@ import { createContext, useContext, useEffect, useState, type ReactNode } from "
 export interface AuthUser {
   id: string;
   provider: "kakao" | "naver";
-  nickname: string;
-  profileImage?: string;
-  email?: string;
 }
 
 interface AuthContextValue {

@@ -3,9 +3,10 @@ import { useAuth } from "@/contexts/AuthContext";
 
 interface AuthMenuProps {
   variant?: "floating" | "inline";
+  onOpenHistory?: () => void;
 }
 
-export function AuthMenu({ variant = "floating" }: AuthMenuProps) {
+export function AuthMenu({ variant = "floating", onOpenHistory }: AuthMenuProps) {
   const { user, loading, loginWithKakao, logout } = useAuth();
   const [open, setOpen] = useState(false);
 
@@ -35,24 +36,28 @@ export function AuthMenu({ variant = "floating" }: AuthMenuProps) {
       <button
         onClick={() => setOpen((v) => !v)}
         className="flex items-center gap-2 rounded-full bg-white/10 hover:bg-white/20 backdrop-blur px-3 py-1.5 border border-white/10"
+        aria-label="계정 메뉴"
       >
-        {user.profileImage ? (
-          <img src={user.profileImage} alt="" className="w-7 h-7 rounded-full object-cover" />
-        ) : (
-          <div className="w-7 h-7 rounded-full bg-primary/40 flex items-center justify-center text-xs text-white">
-            {user.nickname.slice(0, 1)}
-          </div>
-        )}
-        <span className="text-sm text-text-primary hidden sm:inline">{user.nickname}</span>
+        <div className="w-7 h-7 rounded-full bg-[#FEE500] flex items-center justify-center text-[#3C1E1E]">
+          <KakaoIcon />
+        </div>
       </button>
       {open && (
         <div
           className="absolute right-0 mt-2 min-w-[160px] rounded-xl border border-white/10 bg-surface shadow-xl p-1"
           onMouseLeave={() => setOpen(false)}
         >
-          <div className="px-3 py-2 text-xs text-text-secondary truncate">
-            {user.email || user.nickname}
-          </div>
+          {onOpenHistory && (
+            <button
+              onClick={() => {
+                setOpen(false);
+                onOpenHistory();
+              }}
+              className="w-full text-left px-3 py-2 text-sm text-text-primary rounded-lg hover:bg-white/5"
+            >
+              내 분석 기록
+            </button>
+          )}
           <button
             onClick={() => {
               setOpen(false);
