@@ -9,10 +9,20 @@ import { config } from "dotenv";
 config();
 
 // Dynamic import of API handlers
-async function loadHandler(name: string) {
-  const mod = await import(`./${name}.ts`);
+async function loadHandler(modulePath: string) {
+  const mod = await import(`./${modulePath}.ts`);
   return mod.default;
 }
+
+const ROUTES: Record<string, string> = {
+  "/analyze": "analyze",
+  "/compatibility": "compatibility",
+  "/share": "share",
+  "/auth/kakao/login": "auth/kakao/login",
+  "/auth/kakao/callback": "auth/kakao/callback",
+  "/auth/me": "auth/me",
+  "/auth/logout": "auth/logout",
+};
 
 const server = createServer(async (req, res) => {
   const url = new URL(req.url || "/", `http://localhost:3001`);
@@ -39,24 +49,28 @@ const server = createServer(async (req, res) => {
   });
 
   try {
-    let handler: (req: Request) => Promise<Response>;
-
-    if (path === "/analyze") {
-      handler = await loadHandler("analyze");
-    } else if (path === "/compatibility") {
-      handler = await loadHandler("compatibility");
-    } else if (path === "/share") {
-      handler = await loadHandler("share");
-    } else {
+    const modulePath = ROUTES[path];
+    if (!modulePath) {
       res.writeHead(404);
       res.end("Not found");
       return;
     }
+    const handler = (await loadHandler(modulePath)) as (req: Request) => Promise<Response>;
 
     const response = await handler(webRequest);
 
-    // Copy response headers
-    res.writeHead(response.status, Object.fromEntries(response.headers.entries()));
+    // Pass through headers — Set-Cookie may appear multiple times; keep it as an array
+    const resHeaders: Record<string, string | string[]> = {};
+    const setCookies =
+      typeof response.headers.getSetCookie === "function" ? response.headers.getSetCookie() : [];
+    for (const [key, value] of response.headers.entries()) {
+      if (key.toLowerCase() === "set-cookie") continue;
+      resHeaders[key] = value;
+    }
+    if (setCookies.length > 0) {
+      resHeaders["set-cookie"] = setCookies;
+    }
+    res.writeHead(response.status, resHeaders);
 
     // Stream the response body
     if (response.body) {

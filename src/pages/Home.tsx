@@ -4,6 +4,7 @@ import { HeroSection } from "@/components/layout/hero-section";
 import { AnalysisLoading } from "@/components/effects/analysis-loading";
 import { Header } from "@/components/layout/header";
 import { Footer } from "@/components/layout/footer";
+import { AuthMenu } from "@/components/auth/auth-menu";
 import { Tabs } from "@/components/ui/tabs";
 import { AnalysisForm } from "@/components/forms/analysis-form";
 import { CompatibilityForm, type RelationshipType } from "@/components/forms/compatibility-form";
@@ -75,6 +76,7 @@ export default function Home() {
   return (
     <div className="min-h-screen bg-background relative overflow-hidden">
       <StarField />
+      <AuthMenu />
       <Header compact={!showHero} />
       {showHero && <HeroSection onStart={handleStart} />}
       <AnalysisLoading isVisible={isCurrentlyLoading && !hasResults} />

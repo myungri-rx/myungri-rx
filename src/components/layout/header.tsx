@@ -21,7 +21,7 @@ export function Header({ compact = false }: HeaderProps) {
     >
       <div className="mx-auto max-w-5xl flex items-center justify-between">
         <h1 className="font-display font-bold text-xl text-gradient-gold">
-          사주전쟁49
+          Saju49
         </h1>
         <p className="text-xs text-text-secondary hidden md:block">
           30년 전문가의 사주명리 분석

@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "description": "",
   "scripts": {
-    "dev": "npx tsx api/dev-server.ts & vite",
+    "dev": "concurrently -n api,web -c blue,green \"npx tsx api/dev-server.ts\" \"vite\"",
     "dev:api": "npx tsx api/dev-server.ts",
     "build": "vite build",
     "preview": "vite preview"
@@ -26,6 +26,7 @@
     "@upstash/redis": "^1.37.0",
     "@vitejs/plugin-react": "^6.0.1",
     "ai": "^6.0.90",
+    "claude": "^0.1.1",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "react-router-dom": "^7.14.1",
@@ -35,6 +36,7 @@
   "devDependencies": {
     "@eslint/eslintrc": "^3.3.3",
     "autoprefixer": "^10.4.24",
+    "concurrently": "^9.2.1",
     "dotenv": "^17.4.2",
     "eslint": "^9.39.2",
     "postcss": "^8.5.6",
