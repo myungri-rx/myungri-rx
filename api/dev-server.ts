@@ -99,6 +99,8 @@ const ROUTES: Record<string, string> = {
   "/share": "share",
   "/auth/kakao/login": "auth/kakao/login",
   "/auth/kakao/callback": "auth/kakao/callback",
+  "/auth/naver/login": "auth/naver/login",
+  "/auth/naver/callback": "auth/naver/callback",
   "/auth/me": "auth/me",
   "/auth/logout": "auth/logout",
   "/history": "history",

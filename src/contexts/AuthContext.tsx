@@ -9,6 +9,7 @@ interface AuthContextValue {
   user: AuthUser | null;
   loading: boolean;
   loginWithKakao: () => void;
+  loginWithNaver: () => void;
   logout: () => Promise<void>;
   refresh: () => Promise<void>;
 }
@@ -46,13 +47,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     window.location.href = "/api/auth/kakao/login";
   };
 
+  const loginWithNaver = () => {
+    window.location.href = "/api/auth/naver/login";
+  };
+
   const logout = async () => {
     await fetch("/api/auth/logout", { method: "POST", credentials: "include" });
     setUser(null);
   };
 
   return (
-    <AuthContext.Provider value={{ user, loading, loginWithKakao, logout, refresh }}>
+    <AuthContext.Provider
+      value={{ user, loading, loginWithKakao, loginWithNaver, logout, refresh }}
+    >
       {children}
     </AuthContext.Provider>
   );
