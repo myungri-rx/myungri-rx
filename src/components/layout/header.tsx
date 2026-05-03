@@ -3,9 +3,10 @@ import { cn } from "@/lib/utils";
 
 interface HeaderProps {
   compact?: boolean;
+  onHome?: () => void;
 }
 
-export function Header({ compact = false }: HeaderProps) {
+export function Header({ compact = false, onHome }: HeaderProps) {
   if (!compact) return null;
 
   return (
@@ -20,9 +21,14 @@ export function Header({ compact = false }: HeaderProps) {
       }}
     >
       <div className="mx-auto max-w-5xl flex items-center justify-between">
-        <h1 className="font-display font-bold text-xl text-gradient-gold">
+        <button
+          type="button"
+          onClick={onHome}
+          className="font-display font-bold text-xl text-gradient-gold cursor-pointer hover:opacity-80 transition"
+          aria-label="메인으로"
+        >
           사주전쟁49
-        </h1>
+        </button>
         <p className="text-xs text-text-secondary hidden md:block">
           30년 전문가의 사주명리 분석
         </p>

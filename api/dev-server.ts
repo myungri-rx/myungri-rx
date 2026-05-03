@@ -21,11 +21,7 @@ async function loadHandler(name: string): Promise<AnyHandler> {
   return mod.default as AnyHandler;
 }
 
-const ROUTES: Record<string, string> = {
-  "/analyze": "analyze",
-  "/compatibility": "compatibility",
-  "/share": "share",
-};
+
 
 async function readRawBody(req: IncomingMessage): Promise<string> {
   let body = "";
@@ -95,6 +91,20 @@ async function runNodeHandler(
   }
   await handler(req, res);
 }
+
+
+const ROUTES: Record<string, string> = {
+  "/analyze": "analyze",
+  "/compatibility": "compatibility",
+  "/share": "share",
+  "/auth/kakao/login": "auth/kakao/login",
+  "/auth/kakao/callback": "auth/kakao/callback",
+  "/auth/naver/login": "auth/naver/login",
+  "/auth/naver/callback": "auth/naver/callback",
+  "/auth/me": "auth/me",
+  "/auth/logout": "auth/logout",
+  "/history": "history",
+};
 
 const server = createServer(async (req, res) => {
   const url = new URL(req.url || "/", `http://localhost:3001`);
