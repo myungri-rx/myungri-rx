@@ -16,6 +16,10 @@ import { CompatibilityResult } from "@/components/results/compatibility-result";
 import { useSajuAnalysis } from "@/hooks/use-saju-analysis";
 import { useSajuCompatibility } from "@/hooks/use-saju-compatibility";
 import { parseShareUrl } from "@/lib/share-url";
+import { PaymentModal } from "@/components/payment/payment-modal";
+import { SlotFullModal } from "@/components/payment/slot-full-modal";
+import { LoginRequiredModal } from "@/components/payment/login-required-modal";
+import { fetchOrder, type OrderPayload } from "@/lib/payment";
 
 const TABS = [
   { id: "personal", label: "내 사주 보기" },
@@ -37,6 +41,15 @@ export default function Home() {
   const { user } = useAuth();
   const prevUserRef = useRef(user);
 
+  // Payment flow state
+  const [paymentOpen, setPaymentOpen] = useState(false);
+  const [paymentPayload, setPaymentPayload] = useState<OrderPayload | null>(null);
+  const [paymentTeaser, setPaymentTeaser] = useState("");
+  const [loginRequiredOpen, setLoginRequiredOpen] = useState(false);
+  const [slotFull, setSlotFull] = useState<{ count: number; max: number } | null>(null);
+  const [paymentError, setPaymentError] = useState<string | null>(null);
+  const orderHandledRef = useRef(false);
+
   const handleGoHome = () => {
     analysis.reset();
     compatibility.reset();
@@ -52,6 +65,61 @@ export default function Home() {
       handleGoHome();
     }
     prevUserRef.current = user;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user]);
+
+  // 로그인 후 복귀 시 sessionStorage에서 unlock 의도 복원 + 결제모달 자동 오픈
+  useEffect(() => {
+    if (!user) return;
+    let raw: string | null = null;
+    try {
+      raw = sessionStorage.getItem("pending_unlock");
+    } catch {
+      return;
+    }
+    if (!raw) return;
+    try {
+      sessionStorage.removeItem("pending_unlock");
+    } catch {
+      // ignore
+    }
+    try {
+      const pending = JSON.parse(raw) as {
+        payload: OrderPayload;
+        teaserText: string;
+        ts?: number;
+      };
+      if (Date.now() - (pending.ts ?? 0) > 10 * 60 * 1000) return;
+
+      setShowHero(false);
+      setLoginRequiredOpen(false);
+      if (pending.payload.type === "personal") {
+        setActiveTab("personal");
+        compatibility.reset();
+        analysis.restoreTeaserFromOrder({
+          input: pending.payload.input,
+          sajuData: pending.payload.sajuData,
+          concern: pending.payload.concern,
+          teaserText: pending.teaserText,
+        });
+        setLastConcern(pending.payload.concern);
+      } else {
+        setActiveTab("compatibility");
+        analysis.reset();
+        compatibility.restoreTeaserFromOrder({
+          person1: pending.payload.person1,
+          person2: pending.payload.person2,
+          relationshipType: pending.payload.relationshipType,
+          teaserText: pending.teaserText,
+        });
+        setLastRelType(pending.payload.relationshipType);
+      }
+      setPaymentPayload(pending.payload);
+      setPaymentTeaser(pending.teaserText);
+      setPaymentOpen(true);
+    } catch {
+      // malformed entry — ignore
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user]);
 
@@ -77,6 +145,74 @@ export default function Home() {
 
   const [sharedInput, setSharedInput] = useState<ReturnType<typeof parseShareUrl>>(null);
   useEffect(() => {
+    const url = new URL(window.location.href);
+    const orderId = url.searchParams.get("orderId");
+    const payment = url.searchParams.get("payment");
+
+    // Payment return path
+    if (orderId && !orderHandledRef.current) {
+      orderHandledRef.current = true;
+      void (async () => {
+        const order = await fetchOrder(orderId);
+        window.history.replaceState({}, "", "/");
+        if (!order) {
+          setPaymentError("결제 정보를 불러오지 못했어요.");
+          return;
+        }
+        setShowHero(false);
+        if (order.payload.type === "personal") {
+          setActiveTab("personal");
+          compatibility.reset();
+        } else {
+          setActiveTab("compatibility");
+          analysis.reset();
+        }
+
+        if (payment === "success" && order.status === "paid") {
+          if (order.payload.type === "personal") {
+            analysis.restoreAndLoadFull(orderId, {
+              input: order.payload.input,
+              sajuData: order.payload.sajuData,
+              concern: order.payload.concern,
+              teaserText: order.teaserText,
+            });
+            setLastConcern(order.payload.concern);
+          } else {
+            compatibility.restoreAndLoadFull(orderId, {
+              person1: order.payload.person1,
+              person2: order.payload.person2,
+              relationshipType: order.payload.relationshipType,
+              teaserText: order.teaserText,
+            });
+            setLastRelType(order.payload.relationshipType);
+          }
+        } else {
+          // cancelled / failed / already / error — restore teaser only
+          if (order.payload.type === "personal") {
+            analysis.restoreTeaserFromOrder({
+              input: order.payload.input,
+              sajuData: order.payload.sajuData,
+              concern: order.payload.concern,
+              teaserText: order.teaserText,
+            });
+            setLastConcern(order.payload.concern);
+          } else {
+            compatibility.restoreTeaserFromOrder({
+              person1: order.payload.person1,
+              person2: order.payload.person2,
+              relationshipType: order.payload.relationshipType,
+              teaserText: order.teaserText,
+            });
+            setLastRelType(order.payload.relationshipType);
+          }
+          if (payment === "cancelled") setPaymentError("결제가 취소되었어요. 다시 시도하실 수 있어요.");
+          else if (payment === "failed") setPaymentError("결제가 실패했어요. 다시 시도해주세요.");
+        }
+      })();
+      return;
+    }
+
+    // Share URL path
     const params = parseShareUrl(window.location.href);
     if (!params) return;
     window.history.replaceState({}, "", "/");
@@ -87,6 +223,7 @@ export default function Home() {
     } else {
       setActiveTab("compatibility");
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const isCurrentlyLoading = analysis.isLoading || compatibility.isLoading;
@@ -117,6 +254,59 @@ export default function Home() {
     compatibility.reset();
   };
 
+  const buildUnlockPayload = (): { payload: OrderPayload; teaser: string } | null => {
+    if (activeTab === "personal" && analysis.sajuData && analysis.lastInput) {
+      return {
+        payload: {
+          type: "personal",
+          input: analysis.lastInput,
+          sajuData: analysis.sajuData,
+          concern: analysis.lastConcern,
+        },
+        teaser: analysis.teaserText,
+      };
+    }
+    if (
+      activeTab === "compatibility" &&
+      compatibility.person1Data &&
+      compatibility.person2Data
+    ) {
+      return {
+        payload: {
+          type: "compatibility",
+          person1: compatibility.person1Data,
+          person2: compatibility.person2Data,
+          relationshipType: compatibility.lastRelType,
+        },
+        teaser: compatibility.teaserText,
+      };
+    }
+    return null;
+  };
+
+  const handleUnlockRequest = () => {
+    setPaymentError(null);
+    const built = buildUnlockPayload();
+    if (!user) {
+      if (built) {
+        try {
+          sessionStorage.setItem(
+            "pending_unlock",
+            JSON.stringify({ payload: built.payload, teaserText: built.teaser, ts: Date.now() }),
+          );
+        } catch {
+          // sessionStorage 사용 불가 시 그냥 진행
+        }
+      }
+      setLoginRequiredOpen(true);
+      return;
+    }
+    if (!built) return;
+    setPaymentPayload(built.payload);
+    setPaymentTeaser(built.teaser);
+    setPaymentOpen(true);
+  };
+
   return (
     <div className="min-h-screen bg-background relative overflow-hidden">
       <StarField />
@@ -125,6 +315,30 @@ export default function Home() {
         open={historyOpen}
         onClose={() => setHistoryOpen(false)}
         onSelect={handleRestore}
+      />
+      <PaymentModal
+        open={paymentOpen}
+        onClose={() => setPaymentOpen(false)}
+        payload={paymentPayload}
+        teaserText={paymentTeaser}
+        onSlotFull={(count, max) => {
+          setPaymentOpen(false);
+          setSlotFull({ count, max });
+        }}
+      />
+      <SlotFullModal
+        open={!!slotFull}
+        slotCount={slotFull?.count ?? 0}
+        slotMax={slotFull?.max ?? 10}
+        onClose={() => setSlotFull(null)}
+        onOpenHistory={() => {
+          setSlotFull(null);
+          setHistoryOpen(true);
+        }}
+      />
+      <LoginRequiredModal
+        open={loginRequiredOpen}
+        onClose={() => setLoginRequiredOpen(false)}
       />
       <Header compact={!showHero} onHome={handleGoHome} />
       {showHero && <HeroSection onStart={handleStart} />}
@@ -155,6 +369,9 @@ export default function Home() {
             {compatibility.error && (
               <div className="mt-4 glass-card !bg-red-500/10 !border-red-500/20 p-4 text-sm text-red-400">{compatibility.error}</div>
             )}
+            {paymentError && (
+              <div className="mt-4 glass-card !bg-yellow-500/10 !border-yellow-500/20 p-4 text-sm text-yellow-300">{paymentError}</div>
+            )}
           </div>
         </section>
       )}
@@ -165,7 +382,7 @@ export default function Home() {
             <PersonalResult
               sajuData={analysis.sajuData} teaserText={analysis.teaserText} fullText={analysis.fullText}
               isStreaming={analysis.isLoading} concern={lastConcern} phase={analysis.phase}
-              canLoadMore={analysis.canLoadMore} isLoadingMore={analysis.phase === "full-streaming"} onLoadMore={analysis.loadMore}
+              canLoadMore={analysis.canLoadMore} isLoadingMore={analysis.phase === "full-streaming"} onLoadMore={handleUnlockRequest}
             />
           )}
           {activeTab === "compatibility" && compatibility.person1Data && compatibility.person2Data && (
@@ -173,7 +390,7 @@ export default function Home() {
               person1={compatibility.person1Data} person2={compatibility.person2Data}
               teaserText={compatibility.teaserText} fullText={compatibility.fullText}
               isStreaming={compatibility.isLoading} relationshipType={lastRelType} phase={compatibility.phase}
-              canLoadMore={compatibility.canLoadMore} isLoadingMore={compatibility.phase === "full-streaming"} onLoadMore={compatibility.loadMore}
+              canLoadMore={compatibility.canLoadMore} isLoadingMore={compatibility.phase === "full-streaming"} onLoadMore={handleUnlockRequest}
             />
           )}
         </section>

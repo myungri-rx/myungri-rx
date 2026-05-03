@@ -22,7 +22,6 @@ async function streamResponse(
     const chunk = decoder.decode(value, { stream: true });
     accumulated += chunk;
 
-    // Throttle React updates to prevent render overload
     const now = Date.now();
     if (now - lastUpdate >= THROTTLE_MS) {
       onChunk(accumulated);
@@ -30,7 +29,6 @@ async function streamResponse(
     }
   }
 
-  // Final update with complete text
   onChunk(accumulated);
   return accumulated;
 }
@@ -58,15 +56,14 @@ export function useSajuAnalysis() {
   const isLoading = phase === "teaser-streaming" || phase === "full-streaming";
   const canLoadMore = phase === "teaser-done";
 
-  const saveHistory = useCallback(
+  const saveFullHistory = useCallback(
     async (params: {
       input: SajuInput;
       concern: string | undefined;
       data: SajuAnalysisData;
       teaser: string;
       full: string;
-      phase: "teaser" | "full";
-      existingId: string | null;
+      orderId: string;
     }) => {
       if (!user) return null;
       try {
@@ -82,10 +79,10 @@ export function useSajuAnalysis() {
           headers: { "Content-Type": "application/json" },
           credentials: "include",
           body: JSON.stringify({
-            id: params.existingId,
             type: "personal",
             data: payload,
-            phase: params.phase,
+            phase: "full",
+            orderId: params.orderId,
           }),
         });
         if (!res.ok) return null;
@@ -123,66 +120,83 @@ export function useSajuAnalysis() {
         throw new Error("분석 요청에 실패했습니다.");
       }
 
-      const finalText = await streamResponse(response, setTeaserText);
+      await streamResponse(response, setTeaserText);
       setPhase("teaser-done");
-
-      const savedId = await saveHistory({
-        input,
-        concern,
-        data,
-        teaser: finalText,
-        full: "",
-        phase: "teaser",
-        existingId: null,
-      });
-      if (savedId) setHistoryId(savedId);
     } catch (e) {
       setError(e instanceof Error ? e.message : "오류가 발생했습니다.");
       setPhase("idle");
     }
-  }, [saveHistory]);
+  }, []);
 
-  const loadMore = useCallback(async () => {
-    if (!sajuData || phase !== "teaser-done") return;
+  const loadMore = useCallback(
+    async (orderId: string, override?: { sajuData: SajuAnalysisData; teaserText: string; concern?: string; input: SajuInput }) => {
+      const data = override?.sajuData ?? sajuData;
+      const teaser = override?.teaserText ?? teaserText;
+      const concern = override?.concern ?? lastConcern;
+      const input = override?.input ?? lastInput;
+      if (!data || !input) return;
 
-    setError(null);
-    setPhase("full-streaming");
+      setError(null);
+      setPhase("full-streaming");
 
-    try {
-      const response = await fetch("/api/analyze", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          sajuData,
-          concern: lastConcern,
-          mode: "full",
-          teaserContent: teaserText,
-        }),
-      });
-
-      if (!response.ok) {
-        throw new Error("상세 분석 요청에 실패했습니다.");
-      }
-
-      const finalFull = await streamResponse(response, setFullText);
-      setPhase("full-done");
-
-      if (lastInput) {
-        await saveHistory({
-          input: lastInput,
-          concern: lastConcern,
-          data: sajuData,
-          teaser: teaserText,
-          full: finalFull,
-          phase: "full",
-          existingId: historyId,
+      try {
+        const response = await fetch("/api/analyze", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            sajuData: data,
+            concern,
+            mode: "full",
+            teaserContent: teaser,
+            orderId,
+          }),
         });
+
+        if (!response.ok) {
+          throw new Error("상세 분석 요청에 실패했습니다.");
+        }
+
+        const finalFull = await streamResponse(response, setFullText);
+        setPhase("full-done");
+
+        const savedId = await saveFullHistory({
+          input,
+          concern,
+          data,
+          teaser,
+          full: finalFull,
+          orderId,
+        });
+        if (savedId) setHistoryId(savedId);
+      } catch (e) {
+        setError(e instanceof Error ? e.message : "오류가 발생했습니다.");
+        setPhase("teaser-done");
       }
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "오류가 발생했습니다.");
+    },
+    [sajuData, teaserText, lastConcern, lastInput, saveFullHistory],
+  );
+
+  const restoreTeaserFromOrder = useCallback(
+    (payload: { input: SajuInput; sajuData: SajuAnalysisData; concern?: string; teaserText: string }) => {
+      setError(null);
+      setSajuData(payload.sajuData);
+      setTeaserText(payload.teaserText);
+      setFullText("");
+      setLastInput(payload.input);
+      setLastConcern(payload.concern);
+      setHistoryId(null);
       setPhase("teaser-done");
-    }
-  }, [sajuData, phase, lastConcern, teaserText, lastInput, historyId, saveHistory]);
+    },
+    [],
+  );
+
+  const restoreAndLoadFull = useCallback(
+    (orderId: string, payload: { input: SajuInput; sajuData: SajuAnalysisData; concern?: string; teaserText: string }) => {
+      restoreTeaserFromOrder(payload);
+      void loadMore(orderId, payload);
+    },
+    [restoreTeaserFromOrder, loadMore],
+  );
 
   const reset = useCallback(() => {
     setSajuData(null);
@@ -215,8 +229,13 @@ export function useSajuAnalysis() {
     error,
     phase,
     canLoadMore,
+    historyId,
+    lastInput,
+    lastConcern,
     analyze,
     loadMore,
+    restoreTeaserFromOrder,
+    restoreAndLoadFull,
     reset,
     restore,
   };

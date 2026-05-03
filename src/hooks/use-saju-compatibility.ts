@@ -56,15 +56,14 @@ export function useSajuCompatibility() {
   const isLoading = phase === "teaser-streaming" || phase === "full-streaming";
   const canLoadMore = phase === "teaser-done";
 
-  const saveHistory = useCallback(
+  const saveFullHistory = useCallback(
     async (params: {
       p1: SajuAnalysisData;
       p2: SajuAnalysisData;
       relType: string;
       teaser: string;
       full: string;
-      phase: "teaser" | "full";
-      existingId: string | null;
+      orderId: string;
     }) => {
       if (!user) return null;
       try {
@@ -80,10 +79,10 @@ export function useSajuCompatibility() {
           headers: { "Content-Type": "application/json" },
           credentials: "include",
           body: JSON.stringify({
-            id: params.existingId,
             type: "compatibility",
             data: payload,
-            phase: params.phase,
+            phase: "full",
+            orderId: params.orderId,
           }),
         });
         if (!res.ok) return null;
@@ -123,65 +122,105 @@ export function useSajuCompatibility() {
         throw new Error("궁합 분석 요청에 실패했습니다.");
       }
 
-      const finalText = await streamResponse(response, setTeaserText);
+      await streamResponse(response, setTeaserText);
       setPhase("teaser-done");
-
-      const savedId = await saveHistory({
-        p1: data1,
-        p2: data2,
-        relType: relationshipType,
-        teaser: finalText,
-        full: "",
-        phase: "teaser",
-        existingId: null,
-      });
-      if (savedId) setHistoryId(savedId);
     } catch (e) {
       setError(e instanceof Error ? e.message : "오류가 발생했습니다.");
       setPhase("idle");
     }
-  }, [saveHistory]);
+  }, []);
 
-  const loadMore = useCallback(async () => {
-    if (!person1Data || !person2Data || phase !== "teaser-done") return;
+  const loadMore = useCallback(
+    async (
+      orderId: string,
+      override?: {
+        person1: SajuAnalysisData;
+        person2: SajuAnalysisData;
+        relationshipType: string;
+        teaserText: string;
+      },
+    ) => {
+      const p1 = override?.person1 ?? person1Data;
+      const p2 = override?.person2 ?? person2Data;
+      const relType = override?.relationshipType ?? lastRelType;
+      const teaser = override?.teaserText ?? teaserText;
+      if (!p1 || !p2) return;
 
-    setError(null);
-    setPhase("full-streaming");
+      setError(null);
+      setPhase("full-streaming");
 
-    try {
-      const response = await fetch("/api/compatibility", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          person1: person1Data,
-          person2: person2Data,
-          relationshipType: lastRelType,
-          mode: "full",
-          teaserContent: teaserText,
-        }),
-      });
+      try {
+        const response = await fetch("/api/compatibility", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            person1: p1,
+            person2: p2,
+            relationshipType: relType,
+            mode: "full",
+            teaserContent: teaser,
+            orderId,
+          }),
+        });
 
-      if (!response.ok) {
-        throw new Error("상세 궁합 분석 요청에 실패했습니다.");
+        if (!response.ok) {
+          throw new Error("상세 궁합 분석 요청에 실패했습니다.");
+        }
+
+        const finalFull = await streamResponse(response, setFullText);
+        setPhase("full-done");
+
+        const savedId = await saveFullHistory({
+          p1,
+          p2,
+          relType,
+          teaser,
+          full: finalFull,
+          orderId,
+        });
+        if (savedId) setHistoryId(savedId);
+      } catch (e) {
+        setError(e instanceof Error ? e.message : "오류가 발생했습니다.");
+        setPhase("teaser-done");
       }
+    },
+    [person1Data, person2Data, lastRelType, teaserText, saveFullHistory],
+  );
 
-      const finalFull = await streamResponse(response, setFullText);
-      setPhase("full-done");
-
-      await saveHistory({
-        p1: person1Data,
-        p2: person2Data,
-        relType: lastRelType,
-        teaser: teaserText,
-        full: finalFull,
-        phase: "full",
-        existingId: historyId,
-      });
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "오류가 발생했습니다.");
+  const restoreTeaserFromOrder = useCallback(
+    (payload: {
+      person1: SajuAnalysisData;
+      person2: SajuAnalysisData;
+      relationshipType: string;
+      teaserText: string;
+    }) => {
+      setError(null);
+      setPerson1Data(payload.person1);
+      setPerson2Data(payload.person2);
+      setTeaserText(payload.teaserText);
+      setFullText("");
+      setLastRelType(payload.relationshipType);
+      setHistoryId(null);
       setPhase("teaser-done");
-    }
-  }, [person1Data, person2Data, phase, lastRelType, teaserText, historyId, saveHistory]);
+    },
+    [],
+  );
+
+  const restoreAndLoadFull = useCallback(
+    (
+      orderId: string,
+      payload: {
+        person1: SajuAnalysisData;
+        person2: SajuAnalysisData;
+        relationshipType: string;
+        teaserText: string;
+      },
+    ) => {
+      restoreTeaserFromOrder(payload);
+      void loadMore(orderId, payload);
+    },
+    [restoreTeaserFromOrder, loadMore],
+  );
 
   const reset = useCallback(() => {
     setPerson1Data(null);
@@ -214,8 +253,12 @@ export function useSajuCompatibility() {
     error,
     phase,
     canLoadMore,
+    historyId,
+    lastRelType,
     analyze,
     loadMore,
+    restoreTeaserFromOrder,
+    restoreAndLoadFull,
     reset,
     restore,
   };

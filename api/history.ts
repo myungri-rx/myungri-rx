@@ -1,8 +1,7 @@
 import { getSession, getRedis } from "./_lib/session";
+import { getOrder, markOrderConsumed, HISTORY_LIMIT } from "./_lib/orders";
 
 export const config = { runtime: "edge" };
-
-const MAX_PER_USER = 10;
 
 type HistoryType = "personal" | "compatibility";
 
@@ -76,7 +75,7 @@ export default async function handler(request: Request): Promise<Response> {
 
   // GET list
   if (request.method === "GET") {
-    const ids = ((await redis.lrange(`history:${userId}`, 0, MAX_PER_USER - 1)) || []) as string[];
+    const ids = ((await redis.lrange(`history:${userId}`, 0, HISTORY_LIMIT - 1)) || []) as string[];
     const items: Omit<HistoryRecord, "data">[] = [];
     const staleIds: string[] = [];
     for (const itemId of ids) {
@@ -94,11 +93,10 @@ export default async function handler(request: Request): Promise<Response> {
         updatedAt: rec.updatedAt,
       });
     }
-    // Clean up stale LIST entries (data expired/deleted)
     for (const staleId of staleIds) {
       await redis.lrem(`history:${userId}`, 0, staleId);
     }
-    return Response.json({ items });
+    return Response.json({ items, slotMax: HISTORY_LIMIT });
   }
 
   // POST create or update
@@ -108,6 +106,7 @@ export default async function handler(request: Request): Promise<Response> {
       type: HistoryType;
       data: Record<string, unknown>;
       phase?: "teaser" | "full";
+      orderId?: string;
     };
     try {
       body = await request.json();
@@ -118,7 +117,7 @@ export default async function handler(request: Request): Promise<Response> {
       return Response.json({ error: "invalid type" }, { status: 400 });
     }
     const now = Date.now();
-    const preview = buildPreview(body.type, body.data, body.phase || "teaser");
+    const preview = buildPreview(body.type, body.data, body.phase || "full");
 
     // Update existing
     if (body.id) {
@@ -137,7 +136,33 @@ export default async function handler(request: Request): Promise<Response> {
       // fall through to create new if existing is gone
     }
 
-    // Create new
+    // New record requires a paid order
+    if (!body.orderId) {
+      return Response.json({ error: "payment_required" }, { status: 402 });
+    }
+
+    const order = await getOrder(body.orderId);
+    if (!order || order.userId !== userId) {
+      return Response.json({ error: "order_not_found" }, { status: 404 });
+    }
+    if (order.status === "consumed" && order.historyId) {
+      // Idempotent: already saved — return existing id
+      return Response.json({ id: order.historyId });
+    }
+    if (order.status !== "paid") {
+      return Response.json({ error: "order_not_paid", status: order.status }, { status: 403 });
+    }
+
+    // Slot check
+    const len = ((await redis.llen(`history:${userId}`)) as number) || 0;
+    if (len >= HISTORY_LIMIT) {
+      return Response.json(
+        { error: "slot_full", slotCount: len, slotMax: HISTORY_LIMIT },
+        { status: 403 },
+      );
+    }
+
+    // Create
     const analysisId = newAnalysisId();
     const record: HistoryRecord = {
       id: analysisId,
@@ -150,14 +175,8 @@ export default async function handler(request: Request): Promise<Response> {
     await redis.set(`history:${userId}:${analysisId}`, JSON.stringify(record));
     await redis.lpush(`history:${userId}`, analysisId);
 
-    // Cap at MAX_PER_USER
-    const extras = ((await redis.lrange(`history:${userId}`, MAX_PER_USER, -1)) || []) as string[];
-    if (extras.length > 0) {
-      for (const extraId of extras) {
-        await redis.del(`history:${userId}:${extraId}`);
-      }
-      await redis.ltrim(`history:${userId}`, 0, MAX_PER_USER - 1);
-    }
+    // Consume order
+    await markOrderConsumed(order.orderId, analysisId);
 
     return Response.json({ id: analysisId });
   }

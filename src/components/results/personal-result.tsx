@@ -145,8 +145,11 @@ export function PersonalResult({
                   onClick={onLoadMore}
                   className="relative px-8 py-3 rounded-xl text-base font-medium bg-gradient-to-r from-primary via-primary-light to-primary text-white border border-accent/40 shadow-[0_0_20px_rgba(212,175,55,0.15)] hover:shadow-[0_0_30px_rgba(212,175,55,0.3)] hover:border-accent/70 active:scale-[0.98] transition-all duration-300"
                 >
-                  더보기 — 나만의 처방전 받기
+                  전체 분석 잠금해제 · 1,650원
                 </button>
+                <p className="mt-2 text-xs text-text-secondary/70">
+                  카카오페이 · 결제 후 영구 보관 (최대 10건)
+                </p>
               </div>
             </div>
           )}

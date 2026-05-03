@@ -3,6 +3,8 @@ import { streamText } from "ai";
 import { anthropic } from "@ai-sdk/anthropic";
 import { PERSONAL_SYSTEM_PROMPT_TEASER, PERSONAL_SYSTEM_PROMPT_FULL, buildPersonalUserPrompt } from "../src/lib/prompts/personal.js";
 import type { SajuAnalysisData, AnalysisMode } from "../src/lib/types.js";
+import { getOrder } from "./_lib/orders.js";
+import { getSession } from "./_lib/session.js";
 
 export const config = { maxDuration: 300 };
 
@@ -16,6 +18,17 @@ interface AnalyzeBody {
   concern?: string;
   mode?: AnalysisMode;
   teaserContent?: string;
+  orderId?: string;
+}
+
+function toWebRequest(req: IncomingMessage): Request {
+  const headers = new Headers();
+  for (const [k, v] of Object.entries(req.headers)) {
+    if (v) headers.set(k, Array.isArray(v) ? v[0] : v);
+  }
+  const proto = (req.headers["x-forwarded-proto"] as string) || "http";
+  const host = (req.headers["host"] as string) || "localhost";
+  return new Request(`${proto}://${host}${req.url || "/"}`, { method: req.method, headers });
 }
 
 async function readJsonBody<T>(req: IncomingMessage): Promise<T> {
@@ -45,7 +58,36 @@ export default async function handler(req: IncomingMessage, res: ServerResponse)
     return;
   }
 
-  const { sajuData, concern, mode = "teaser", teaserContent } = body;
+  const { sajuData, concern, mode = "teaser", teaserContent, orderId } = body;
+
+  if (mode === "full") {
+    const session = await getSession(toWebRequest(req));
+    if (!session) {
+      res.statusCode = 401;
+      res.setHeader("Content-Type", "application/json");
+      res.end(JSON.stringify({ error: "auth_required" }));
+      return;
+    }
+    if (!orderId) {
+      res.statusCode = 402;
+      res.setHeader("Content-Type", "application/json");
+      res.end(JSON.stringify({ error: "payment_required" }));
+      return;
+    }
+    const order = await getOrder(orderId);
+    if (!order || order.userId !== session.user.id) {
+      res.statusCode = 404;
+      res.setHeader("Content-Type", "application/json");
+      res.end(JSON.stringify({ error: "order_not_found" }));
+      return;
+    }
+    if (order.status !== "paid") {
+      res.statusCode = 403;
+      res.setHeader("Content-Type", "application/json");
+      res.end(JSON.stringify({ error: "order_not_paid", status: order.status }));
+      return;
+    }
+  }
 
   console.log("[analyze]", JSON.stringify({
     name: sajuData.input.name,

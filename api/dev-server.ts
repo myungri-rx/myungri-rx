@@ -104,6 +104,11 @@ const ROUTES: Record<string, string> = {
   "/auth/me": "auth/me",
   "/auth/logout": "auth/logout",
   "/history": "history",
+  "/payment/start": "payment/start",
+  "/payment/order": "payment/order",
+  "/payment/kakao/approve": "payment/kakao/approve",
+  "/payment/kakao/cancel": "payment/kakao/cancel",
+  "/payment/kakao/fail": "payment/kakao/fail",
 };
 
 const server = createServer(async (req, res) => {

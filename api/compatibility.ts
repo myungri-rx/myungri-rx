@@ -3,6 +3,8 @@ import { streamText } from "ai";
 import { anthropic } from "@ai-sdk/anthropic";
 import { getCompatibilitySystemPrompt, buildCompatibilityUserPrompt } from "../src/lib/prompts/compatibility.js";
 import type { SajuAnalysisData, AnalysisMode } from "../src/lib/types.js";
+import { getOrder } from "./_lib/orders.js";
+import { getSession } from "./_lib/session.js";
 
 export const config = { maxDuration: 300 };
 
@@ -17,6 +19,17 @@ interface CompatibilityBody {
   relationshipType?: string;
   mode?: AnalysisMode;
   teaserContent?: string;
+  orderId?: string;
+}
+
+function toWebRequest(req: IncomingMessage): Request {
+  const headers = new Headers();
+  for (const [k, v] of Object.entries(req.headers)) {
+    if (v) headers.set(k, Array.isArray(v) ? v[0] : v);
+  }
+  const proto = (req.headers["x-forwarded-proto"] as string) || "http";
+  const host = (req.headers["host"] as string) || "localhost";
+  return new Request(`${proto}://${host}${req.url || "/"}`, { method: req.method, headers });
 }
 
 async function readJsonBody<T>(req: IncomingMessage): Promise<T> {
@@ -46,7 +59,36 @@ export default async function handler(req: IncomingMessage, res: ServerResponse)
     return;
   }
 
-  const { person1, person2, relationshipType = "romantic", mode = "teaser", teaserContent } = body;
+  const { person1, person2, relationshipType = "romantic", mode = "teaser", teaserContent, orderId } = body;
+
+  if (mode === "full") {
+    const session = await getSession(toWebRequest(req));
+    if (!session) {
+      res.statusCode = 401;
+      res.setHeader("Content-Type", "application/json");
+      res.end(JSON.stringify({ error: "auth_required" }));
+      return;
+    }
+    if (!orderId) {
+      res.statusCode = 402;
+      res.setHeader("Content-Type", "application/json");
+      res.end(JSON.stringify({ error: "payment_required" }));
+      return;
+    }
+    const order = await getOrder(orderId);
+    if (!order || order.userId !== session.user.id) {
+      res.statusCode = 404;
+      res.setHeader("Content-Type", "application/json");
+      res.end(JSON.stringify({ error: "order_not_found" }));
+      return;
+    }
+    if (order.status !== "paid") {
+      res.statusCode = 403;
+      res.setHeader("Content-Type", "application/json");
+      res.end(JSON.stringify({ error: "order_not_paid", status: order.status }));
+      return;
+    }
+  }
 
   console.log("[compatibility]", JSON.stringify({
     person1: { name: person1.input.name, gender: person1.input.gender, birthDate: person1.input.birthDate, birthTime: person1.input.birthTime },
