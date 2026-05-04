@@ -68,6 +68,15 @@ export function Footer() {
           <br />
           중요한 결정은 전문가 상담과 본인의 판단에 따라 내려주세요.
         </p>
+
+        {/* Business info */}
+        <div className="mt-6 pt-4 border-t border-white/5">
+          <p className="text-[10px] leading-relaxed text-text-secondary/25">
+            포러베러원(forabetterone) | 대표: 최희슬 | 사업자등록번호: 292-01-03864
+            <br />
+            서울특별시 서초구 언남9길 7-5, 304호(양재동, 프라임51)
+          </p>
+        </div>
       </div>
     </footer>
   );
