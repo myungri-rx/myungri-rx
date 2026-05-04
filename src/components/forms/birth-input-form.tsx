@@ -4,21 +4,21 @@ import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import type { SajuInput } from "@/lib/types";
 
-// 12시진 (2시간 단위) options for birth time
+// 12시진 (30분 기준, 초정법) options for birth time
 const HOUR_OPTIONS = [
   { value: "모름", label: "모름" },
-  { value: "23:30", label: "자시 (23:00~01:00)" },
-  { value: "02:00", label: "축시 (01:00~03:00)" },
-  { value: "04:00", label: "인시 (03:00~05:00)" },
-  { value: "06:00", label: "묘시 (05:00~07:00)" },
-  { value: "08:00", label: "진시 (07:00~09:00)" },
-  { value: "10:00", label: "사시 (09:00~11:00)" },
-  { value: "12:00", label: "오시 (11:00~13:00)" },
-  { value: "14:00", label: "미시 (13:00~15:00)" },
-  { value: "16:00", label: "신시 (15:00~17:00)" },
-  { value: "18:00", label: "유시 (17:00~19:00)" },
-  { value: "20:00", label: "술시 (19:00~21:00)" },
-  { value: "22:00", label: "해시 (21:00~23:00)" },
+  { value: "00:30", label: "자시 (23:30~01:30)" },
+  { value: "02:30", label: "축시 (01:30~03:30)" },
+  { value: "04:30", label: "인시 (03:30~05:30)" },
+  { value: "06:30", label: "묘시 (05:30~07:30)" },
+  { value: "08:30", label: "진시 (07:30~09:30)" },
+  { value: "10:30", label: "사시 (09:30~11:30)" },
+  { value: "12:30", label: "오시 (11:30~13:30)" },
+  { value: "14:30", label: "미시 (13:30~15:30)" },
+  { value: "16:30", label: "신시 (15:30~17:30)" },
+  { value: "18:30", label: "유시 (17:30~19:30)" },
+  { value: "20:30", label: "술시 (19:30~21:30)" },
+  { value: "22:30", label: "해시 (21:30~23:30)" },
 ];
 
 // Year options: 1920–2026
